@@ -106,6 +106,7 @@ CREATE TABLE Restaurants (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (owner_id) REFERENCES Users(user_id),
+    UNIQUE KEY unique_owner (owner_id),  -- ✅ Each owner can have only ONE restaurant
     INDEX idx_status (status),
     INDEX idx_city (city),
     INDEX idx_rating (rating),

@@ -20,27 +20,39 @@ router.get(
   '/',
   auth,
   asyncHandler(async (req, res) => {
-    if (req.user.role !== 'customer') {
-      throw new AppError('Only customers have carts', 403);
-    }
-    const customerId = await getCustomerId(req.user.id);
-    if (!customerId) throw new AppError('Customer profile not found', 400);
+    console.log('🛒 GET /cart for user:', req.user.id);
 
-    const [rows] = await pool.query(
+    // Get customer_id from user_id
+    const [[customer]] = await pool.query(
+      'SELECT customer_id FROM Customers WHERE user_id = ?',
+      [req.user.id]
+    );
+
+    if (!customer) {
+      console.warn('⚠️ No customer record for user:', req.user.id);
+      return res.json([]);
+    }
+
+    const [items] = await pool.query(
       `SELECT 
-         ci.*,
+         ci.cart_item_id,
+         ci.menu_item_id,
+         ci.quantity,
+         ci.special_requests,
+         ci.restaurant_id,
          mi.name,
-         mi.image_url,
          mi.price,
+         mi.image_url,
          r.name AS restaurant_name
        FROM Cart_Items ci
        JOIN Menu_Items mi ON ci.menu_item_id = mi.menu_item_id
        JOIN Restaurants r ON ci.restaurant_id = r.restaurant_id
        WHERE ci.customer_id = ?`,
-      [customerId]
+      [customer.customer_id]
     );
 
-    res.json(rows);
+    console.log(`✅ Found ${items.length} cart items`);
+    res.json(items);
   })
 );
 

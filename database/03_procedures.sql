@@ -43,7 +43,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cart is empty for this restaurant';
     END IF;
 
-    -- Snapshot valid cart items into TEMP table
+    -- Snapshot valid cart items into TEMP table with better validation
     DROP TEMPORARY TABLE IF EXISTS tmp_cart_items;
     CREATE TEMPORARY TABLE tmp_cart_items AS
     SELECT 
@@ -57,22 +57,22 @@ BEGIN
     FROM Cart_Items ci
     INNER JOIN Menu_Items mi 
         ON ci.menu_item_id = mi.menu_item_id
-       AND mi.restaurant_id = p_restaurant_id
        AND mi.is_available = TRUE
     INNER JOIN Restaurants r 
-        ON ci.restaurant_id = r.restaurant_id
+        ON mi.restaurant_id = r.restaurant_id
+       AND r.restaurant_id = p_restaurant_id
     WHERE ci.customer_id = p_customer_id
       AND ci.restaurant_id = p_restaurant_id;
 
     -- Ensure snapshot is not empty
     SELECT COUNT(*) INTO v_tmp_count FROM tmp_cart_items;
     IF v_tmp_count = 0 THEN
-        SET v_error_msg = 'No valid items found in cart for this restaurant';
+        SET v_error_msg = CONCAT('No valid menu items found in cart for restaurant ', p_restaurant_id);
         ROLLBACK;
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
     END IF;
 
-    -- Calculate subtotal etc. from snapshot (no minimum_order check)
+    -- Calculate subtotal etc. from snapshot
     SELECT 
         SUM(quantity * price),
         MAX(delivery_fee),

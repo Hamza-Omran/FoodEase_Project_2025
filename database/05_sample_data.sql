@@ -65,6 +65,15 @@ VALUES
   ('owner@foodease.local',
    '$2b$10$afJGWoyUnnZ6V94PqoozYucP/MDgCesGNo7/E1wYTk2/UUkN1BSjC',  -- owner password hash
    'restaurant_owner', '01000000002', 'Pizza Palace Owner',     1, 1),
+  ('owner2@foodease.local',
+   '$2b$10$afJGWoyUnnZ6V94PqoozYucP/MDgCesGNo7/E1wYTk2/UUkN1BSjC',  -- owner password hash
+   'restaurant_owner', '01000000005', 'Sushi House Owner',     1, 1),
+  ('owner3@foodease.local',
+   '$2b$10$afJGWoyUnnZ6V94PqoozYucP/MDgCesGNo7/E1wYTk2/UUkN1BSjC',  -- owner password hash
+   'restaurant_owner', '01000000006', 'Burger Hub Owner',     1, 1),
+  ('owner4@foodease.local',
+   '$2b$10$afJGWoyUnnZ6V94PqoozYucP/MDgCesGNo7/E1wYTk2/UUkN1BSjC',  -- owner password hash
+   'restaurant_owner', '01000000007', 'Healthy Bites Owner',     1, 1),
   ('customer@foodease.local',
    '$2b$10$afJGWoyUnnZ6V94PqoozYucP/MDgCesGNo7/E1wYTk2/UUkN1BSjC',  -- customer password hash
    'customer',         '01000000003', 'Test Customer',          1, 1),
@@ -75,6 +84,9 @@ VALUES
 -- Capture IDs (ordered by creation time)
 SELECT user_id INTO @admin_user_id    FROM Users WHERE email='admin@foodease.local';
 SELECT user_id INTO @owner_user_id    FROM Users WHERE email='owner@foodease.local';
+SELECT user_id INTO @owner2_user_id   FROM Users WHERE email='owner2@foodease.local';
+SELECT user_id INTO @owner3_user_id   FROM Users WHERE email='owner3@foodease.local';
+SELECT user_id INTO @owner4_user_id   FROM Users WHERE email='owner4@foodease.local';
 SELECT user_id INTO @customer_user_id FROM Users WHERE email='customer@foodease.local';
 SELECT user_id INTO @driver_user_id   FROM Users WHERE email='driver@foodease.local';
 
@@ -119,7 +131,7 @@ INSERT INTO Drivers (
 SELECT driver_id INTO @driver_id FROM Drivers WHERE user_id = @driver_user_id;
 
 -- ============================================
--- RESTAURANTS
+-- RESTAURANTS (each owner has ONE restaurant max)
 -- ============================================
 
 INSERT INTO Restaurants (
@@ -136,42 +148,42 @@ INSERT INTO Restaurants (
    '12 Main St', 'Cairo', 'Cairo', '12345',
    NULL, NULL, '10:00:00', '23:59:59', 'active',
    4.6, 128,
-   'https://images.unsplash.com/photo-1601924582975-7aa6ec4c37aa?w=800',
-   'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200',
-   20.00, 50.00, 30,        -- minimum_order lowered from 80.00 to 50.00
+   NULL,  -- ✅ No external URL
+   NULL,  -- ✅ No external URL
+   20.00, 50.00, 30,
    'Italian', 1, 15.00
   ),
-  (@owner_user_id, 'Sushi House', 'sushi-house',
+  (@owner2_user_id, 'Sushi House', 'sushi-house',
    'Fresh sushi and Japanese cuisine.',
    '01111111112', 'sushi@house.eg',
    '34 Sea Rd', 'Alexandria', 'Alex', '54321',
    NULL, NULL, '11:00:00', '23:00:00', 'active',
    4.8, 95,
-   'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
-   'https://images.unsplash.com/photo-1543353071-873f17a7a088?w=1200',
-   25.00, 50.00, 40,        -- minimum_order lowered from 100.00 to 50.00
+   NULL,  -- ✅ No external URL
+   NULL,  -- ✅ No external URL
+   25.00, 50.00, 40,
    'Japanese', 1, 15.00
   ),
-  (@owner_user_id, 'Burger Hub', 'burger-hub',
+  (@owner3_user_id, 'Burger Hub', 'burger-hub',
    'Juicy burgers and fries.',
    '01111111113', 'burger@hub.eg',
    '56 Nile St', 'Giza', 'Giza', '67890',
    NULL, NULL, '09:00:00', '23:00:00', 'active',
    4.3, 60,
-   'https://images.unsplash.com/photo-1550317138-10000687a72b?w=800',
-   'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200',
-   15.00, 50.00, 35,        -- minimum_order lowered from 70.00 to 50.00
+   NULL,  -- ✅ No external URL
+   NULL,  -- ✅ No external URL
+   15.00, 50.00, 35,
    'American', 0, 15.00
   ),
-  (@owner_user_id, 'Healthy Bites', 'healthy-bites',
+  (@owner4_user_id, 'Healthy Bites', 'healthy-bites',
    'Healthy salads and bowls.',
    '01111111114', 'healthy@bites.eg',
    '89 Green Rd', 'Cairo', 'Cairo', '55555',
    NULL, NULL, '10:00:00', '22:00:00', 'active',
    4.9, 40,
-   'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800',
-   'https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?w=1200',
-   18.00, 50.00, 25,        -- minimum_order lowered from 90.00 to 50.00
+   NULL,  -- ✅ No external URL
+   NULL,  -- ✅ No external URL
+   18.00, 50.00, 25,
    'Healthy', 1, 15.00
   );
 
@@ -195,7 +207,7 @@ SELECT category_id INTO @cat3_id FROM Menu_Categories WHERE restaurant_id=@rest2
 SELECT category_id INTO @cat4_id FROM Menu_Categories WHERE restaurant_id=@rest2_id AND name='Nigiri & Sashimi';
 
 -- ============================================
--- MENU ITEMS
+-- MENU ITEMS (using uploaded images)
 -- ============================================
 
 INSERT INTO Menu_Items (
@@ -205,11 +217,12 @@ INSERT INTO Menu_Items (
   is_vegetarian, is_vegan, is_spicy, spice_level,
   calories, allergens, rating, total_reviews, total_orders
 ) VALUES
+  -- Pizza Palace items (@rest1_id)
   (@rest1_id, @cat1_id,
    'Margherita Pizza', 'margherita-pizza',
    'Tomato sauce, mozzarella, fresh basil.',
    89.99, NULL,
-   'https://images.unsplash.com/photo-1601924582975-7aa6ec4c37aa?w=800',
+   '/uploads/restaurants/pizza.jpeg',
    1, 1, 20,
    1, 0, 0, NULL,
    900, 'dairy,gluten', 4.7, 45, 120
@@ -218,7 +231,7 @@ INSERT INTO Menu_Items (
    'Pepperoni Pizza', 'pepperoni-pizza',
    'Tomato sauce, mozzarella, spicy pepperoni.',
    109.99, NULL,
-   'https://images.unsplash.com/photo-1548365328-9daaf8b4c093?w=800',
+   '/uploads/restaurants/pizza2.jpeg',
    1, 1, 25,
    0, 0, 1, 'medium',
    1100, 'dairy,gluten', 4.5, 60, 180
@@ -227,44 +240,28 @@ INSERT INTO Menu_Items (
    'Garlic Bread', 'garlic-bread',
    'Freshly baked bread with garlic butter.',
    39.99, NULL,
-   'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800',
+   NULL,
    1, 0, 10,
    1, 0, 0, NULL,
    400, 'gluten,dairy', 4.2, 20, 70
-  ),
-  (@rest2_id, @cat3_id,
-   'California Roll', 'california-roll',
-   'Crab, avocado, cucumber, sesame.',
-   79.99, NULL,
-   'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
-   1, 1, 15,
-   0, 0, 0, NULL,
-   300, 'shellfish,sesame', 4.8, 80, 200
-  ),
-  (@rest2_id, @cat4_id,
-   'Salmon Nigiri', 'salmon-nigiri',
-   'Fresh salmon on seasoned rice.',
-   59.99, NULL,
-   'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
-   1, 0, 12,
-   0, 0, 0, NULL,
-   250, 'fish', 4.9, 40, 90
   );
 
-SELECT menu_item_id INTO @mi1_id FROM Menu_Items WHERE slug='margherita-pizza';
-SELECT menu_item_id INTO @mi2_id FROM Menu_Items WHERE slug='pepperoni-pizza';
-SELECT menu_item_id INTO @mi3_id FROM Menu_Items WHERE slug='garlic-bread';
-SELECT menu_item_id INTO @mi4_id FROM Menu_Items WHERE slug='california-roll';
-SELECT menu_item_id INTO @mi5_id FROM Menu_Items WHERE slug='salmon-nigiri';
+-- Capture menu item IDs ✅ IMMEDIATELY after insert
+SELECT menu_item_id INTO @mi1_id FROM Menu_Items WHERE slug='margherita-pizza' AND restaurant_id=@rest1_id LIMIT 1;
+SELECT menu_item_id INTO @mi2_id FROM Menu_Items WHERE slug='pepperoni-pizza' AND restaurant_id=@rest1_id LIMIT 1;
+SELECT menu_item_id INTO @mi3_id FROM Menu_Items WHERE slug='garlic-bread' AND restaurant_id=@rest1_id LIMIT 1;
+
+-- Verify captures worked
+IF @mi1_id IS NULL THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Failed to capture Margherita Pizza menu_item_id';
+END IF;
 
 -- Inventory snapshot
 INSERT INTO Menu_Item_Inventory (menu_item_id, stock_quantity, low_stock_threshold, last_restocked_at, last_restocked_quantity)
 VALUES
   (@mi1_id, 50, 10, NOW(), 50),
   (@mi2_id, 40, 10, NOW(), 40),
-  (@mi3_id, 60, 10, NOW(), 60),
-  (@mi4_id, 50, 10, NOW(), 50),
-  (@mi5_id, 50, 10, NOW(), 50);
+  (@mi3_id, 60, 10, NOW(), 60);
 
 -- ============================================
 -- SIMPLE COUPON
@@ -290,57 +287,39 @@ INSERT INTO Coupons (
 
 INSERT INTO order_sequence VALUES (NULL);
 
--- Use customer_id & rest1_id captured earlier
-INSERT INTO Orders (
-  customer_id, restaurant_id, delivery_address_id,
-  order_date, status, payment_status,
-  subtotal, delivery_fee, tax, discount,
-  loyalty_points_used, loyalty_discount,
-  total_amount, special_instructions,
-  estimated_prep_time, estimated_delivery_time
-) VALUES (
-  @customer_id, @rest1_id, @addr1_id,
-  NOW(), 'preparing', 'pending',
-  199.98, 20.00, 27.99, 0.00,
-  0, 0.00,
-  247.97, 'Please add extra cheese.',
-  25, DATE_ADD(NOW(), INTERVAL 45 MINUTE)
+-- ✅ Use CALL sp_place_order instead of direct INSERT
+-- First, add items to cart
+DELETE FROM Cart_Items WHERE customer_id = @customer_id; -- Clear any existing cart
+
+INSERT INTO Cart_Items (customer_id, restaurant_id, menu_item_id, quantity, special_requests)
+VALUES
+  (@customer_id, @rest1_id, @mi1_id, 1, 'No olives'),
+  (@customer_id, @rest1_id, @mi2_id, 1, NULL);
+
+-- Now place the order via stored procedure
+CALL sp_place_order(
+    @customer_id,
+    @rest1_id,
+    @addr1_id,
+    'Please add extra cheese.',
+    'cash',
+    NULL
 );
 
-SET @order1_id := LAST_INSERT_ID();
+-- Get the order_id
+SELECT order_id INTO @order1_id 
+FROM Orders 
+WHERE customer_id = @customer_id 
+ORDER BY order_date DESC 
+LIMIT 1;
 
-INSERT INTO Order_Items (
-  order_id, menu_item_id, menu_item_name,
-  quantity, unit_price, subtotal, special_requests
-) VALUES
-  (@order1_id, @mi1_id, 'Margherita Pizza', 1, 89.99, 89.99, 'No olives'),
-  (@order1_id, @mi2_id, 'Pepperoni Pizza', 1, 109.99, 109.99, NULL);
-
-INSERT INTO Payments (
-  order_id, payment_method, payment_status,
-  amount, transaction_id, payment_gateway, gateway_response,
-  paid_at, refund_amount, refunded_at, refund_reason,
-  failure_reason, retry_count
-) VALUES
-  (@order1_id, 'cash', 'pending',
-   247.97, NULL, NULL, NULL,
-   NULL, 0.00, NULL, NULL,
-   NULL, 0);
-
+-- Assign driver
 INSERT INTO Delivery_Assignments (
   order_id, driver_id,
-  assigned_at, accepted_at, pickup_time, delivery_time,
-  delivery_status,
-  pickup_latitude, pickup_longitude, delivery_latitude, delivery_longitude,
-  current_latitude, current_longitude,
-  distance_km, delivery_fee, driver_earnings,
-  rejection_reason, failure_reason, notes
-) VALUES
-  (@order1_id, @driver_id,
-   NOW(), NULL, NULL, NULL,
-   'assigned',
-   NULL, NULL, NULL, NULL,
-   NULL, NULL,
-   NULL, 20.00, 14.00,
-   NULL, NULL, NULL
-  );
+  assigned_at, delivery_status,
+  delivery_fee, driver_earnings
+) VALUES (
+  @order1_id, @driver_id,
+  NOW(), 'assigned',
+  20.00, 14.00
+);

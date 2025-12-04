@@ -29,14 +29,17 @@ router.get(
     const [rows] = await pool.query(
       `SELECT 
          o.*,
-         r.name AS restaurant_name
+         r.name AS restaurant_name,
+         ca.street_address AS delivery_address
        FROM Orders o
        JOIN Restaurants r ON o.restaurant_id = r.restaurant_id
+       JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
        WHERE o.customer_id = ?
        ORDER BY o.order_date DESC`,
       [customerRow.customer_id]
     );
 
+    console.log(`✅ Found ${rows.length} orders`);
     res.json(rows);
   })
 );

@@ -49,17 +49,17 @@ export default function DeliveryDashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-10 gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold text-orange-600">
-            لوحة تحكم التوصيل
+            Delivery Dashboard
           </h1>
-          <p className="text-lg sm:text-xl text-gray-600 mt-2">
-            مرحبًا, {user.name}
+          <p className="text-lg sm:text-xl text-gray-800 mt-2">
+            Welcome, {user.name}
           </p>
         </div>
         <button
           onClick={logout}
           className="w-full sm:w-auto bg-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold hover:bg-red-700 transition"
         >
-          تسجيل الخروج
+          Logout
         </button>
       </div>
 
@@ -70,25 +70,25 @@ export default function DeliveryDashboard() {
               <p className="text-2xl font-bold text-orange-600">
                 {driver.completed_deliveries}
               </p>
-              <p className="text-gray-600">تم التوصيل</p>
+              <p className="text-gray-600">Completed</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-orange-600">
                 {driver.total_deliveries}
               </p>
-              <p className="text-gray-600">الإجمالي</p>
+              <p className="text-gray-600">Total</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-orange-600">
                 {parseFloat(driver.earnings_total).toFixed(2)}
               </p>
-              <p className="text-gray-600">الأرباح (EGP)</p>
+              <p className="text-gray-600">Earnings (EGP)</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-orange-600">
                 {parseFloat(driver.rating).toFixed(1)} ⭐
               </p>
-              <p className="text-gray-600">التقييم</p>
+              <p className="text-gray-600">Rating</p>
             </div>
           </div>
         </div>
@@ -96,19 +96,19 @@ export default function DeliveryDashboard() {
 
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b">
-          <h2 className="text-xl font-bold">عمليات التوصيل النشطة</h2>
+          <h2 className="text-xl font-bold text-gray-900">Active Deliveries</h2>
         </div>
         <div className="divide-y">
           {assignments.length === 0 ? (
             <p className="p-6 text-center text-gray-600">
-              لا توجد عمليات توصيل نشطة
+              No active deliveries
             </p>
           ) : (
             assignments.map((assignment) => (
               <div key={assignment.assignment_id} className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="font-bold">الطلب #{assignment.order_number}</p>
+                    <p className="font-bold text-gray-900">Order #{assignment.order_number}</p>
                     <p className="text-sm text-gray-600">
                       {assignment.restaurant_name}
                     </p>
@@ -116,7 +116,7 @@ export default function DeliveryDashboard() {
                       {assignment.delivery_address}
                     </p>
                   </div>
-                  <p className="text-xl font-bold">
+                  <p className="text-xl font-bold text-orange-600">
                     {parseFloat(assignment.driver_earnings).toFixed(2)} EGP
                   </p>
                 </div>
@@ -124,32 +124,26 @@ export default function DeliveryDashboard() {
                 <div className="flex gap-2">
                   {assignment.delivery_status === "assigned" && (
                     <button
-                      onClick={() =>
-                        updateDeliveryStatus(assignment.assignment_id, "accepted")
-                      }
+                      onClick={() => updateDeliveryStatus(assignment.assignment_id, "accepted")}
                       className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
                     >
-                      قبول
+                      Accept
                     </button>
                   )}
                   {assignment.delivery_status === "accepted" && (
                     <button
-                      onClick={() =>
-                        updateDeliveryStatus(assignment.assignment_id, "picked_up")
-                      }
+                      onClick={() => updateDeliveryStatus(assignment.assignment_id, "picked_up")}
                       className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                     >
-                      تم الاستلام
+                      Picked Up
                     </button>
                   )}
                   {assignment.delivery_status === "picked_up" && (
                     <button
-                      onClick={() =>
-                        updateDeliveryStatus(assignment.assignment_id, "delivered")
-                      }
+                      onClick={() => updateDeliveryStatus(assignment.assignment_id, "delivered")}
                       className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
                     >
-                      تم التوصيل
+                      Mark Delivered
                     </button>
                   )}
                 </div>

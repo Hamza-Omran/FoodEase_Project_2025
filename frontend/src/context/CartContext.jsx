@@ -16,7 +16,8 @@ export function CartProvider({ children }) {
   const { user, token } = useAuth();
 
   useEffect(() => {
-    if (user && token) {
+    // Only fetch cart if user is a customer
+    if (user && user.role === 'customer' && token) {
       fetchCart();
     } else {
       setCart([]);

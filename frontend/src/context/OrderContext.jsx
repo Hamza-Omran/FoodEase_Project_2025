@@ -9,7 +9,12 @@ export function OrderProvider({ children }) {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user) fetchOrders();
+    // Only fetch orders if user is a customer
+    if (user && user.role === 'customer') {
+      fetchOrders();
+    } else {
+      setOrders([]);
+    }
   }, [user]);
 
   const fetchOrders = async () => {
@@ -18,6 +23,7 @@ export function OrderProvider({ children }) {
       setOrders(res.data);
     } catch (err) {
       console.error('Orders fetch error:', err);
+      setOrders([]);
     }
   };
 
