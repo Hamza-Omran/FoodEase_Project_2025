@@ -1,0 +1,331 @@
+const dummyData = {
+  restaurants: [
+    {
+      id: 1,
+      name: "Fresh Food",
+      address: "Nasr City",
+      phone: "010-1111-2222",
+      opening_hours: "10 AM - 12 AM",
+      status: "open",
+      image:
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500",
+    },
+    {
+      id: 2,
+      name: "Pizza House",
+      address: "Heliopolis",
+      phone: "010-3333-4444",
+      opening_hours: "11 AM - 1 AM",
+      status: "open",
+      image:
+        "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500",
+    },
+    {
+      id: 3,
+      name: "Sushi Corner",
+      address: "Maadi",
+      phone: "010-5555-6666",
+      opening_hours: "12 PM - 11 PM",
+      status: "open",
+      image:
+        "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=500",
+    },
+    {
+      id: 4,
+      name: "Burger King",
+      address: "Mohandessin",
+      phone: "010-7777-8888",
+      opening_hours: "10 AM - 2 AM",
+      status: "closed",
+      image: "https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=500",
+    },
+  ],
+  menu_food: [
+    {
+      id: 1,
+      name: "Chicken Burger",
+      description: "Grilled chicken with cheese",
+      price: 80,
+      restaurant_id: 1,
+      image:
+        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
+    },
+    {
+      id: 2,
+      name: "Beef Pizza",
+      description: "Large size with extra cheese",
+      price: 120,
+      restaurant_id: 2,
+      image:
+        "https://images.unsplash.com/photo-1593560704563-f176a2eb61db?w=400",
+    },
+    {
+      id: 3,
+      name: "Veggie Pizza",
+      description: "Medium size with fresh veggies",
+      price: 100,
+      restaurant_id: 2,
+      image:
+        "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400",
+    },
+    {
+      id: 4,
+      name: "California Roll",
+      description: "Sushi roll with avocado and crab",
+      price: 150,
+      restaurant_id: 3,
+      image:
+        "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400",
+    },
+    {
+      id: 5,
+      name: "Spicy Tuna Roll",
+      description: "Tuna sushi with spicy sauce",
+      price: 180,
+      restaurant_id: 3,
+      image:
+        "https://images.unsplash.com/photo-1607305387299-a3d9611d4697?w=400",
+    },
+    {
+      id: 6,
+      name: "Cheese Burger",
+      description: "Classic beef burger with cheese",
+      price: 90,
+      restaurant_id: 4,
+      image: "https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=400",
+    },
+    {
+      id: 7,
+      name: "French Fries",
+      description: "Crispy fries with ketchup",
+      price: 30,
+      restaurant_id: 4,
+      image:
+        "https://images.unsplash.com/photo-1576107232684-1279f390859f?w=400",
+    },
+  ],
+
+  customers: [
+    {
+      id: 1,
+      name: "Ahmed Ali",
+      phone: "01000000000",
+      password: "123456",
+      address: "Nasr City",
+    },
+    {
+      id: 2,
+      name: "Sara Mohamed",
+      phone: "01011111111",
+      password: "sara123",
+      address: "Heliopolis",
+    },
+    {
+      id: 3,
+      name: "Omar Hassan",
+      phone: "01022222222",
+      password: "omar2025",
+      address: "Maadi",
+    },
+    {
+      id: 4,
+      name: "Laila Mostafa",
+      phone: "01033333333",
+      password: "laila99",
+      address: "Mohandessin",
+    },
+  ],
+  orders: [
+    {
+      id: 1,
+      datetime: "2025-01-18 15:30",
+      total: 200,
+      status: "preparing",
+      customer_id: 1,
+      restaurant_id: 1,
+    },
+    {
+      id: 2,
+      datetime: "2025-01-18 16:00",
+      total: 120,
+      status: "delivering",
+      customer_id: 2,
+      restaurant_id: 2,
+    },
+    {
+      id: 3,
+      datetime: "2025-01-19 13:45",
+      total: 330,
+      status: "delivered",
+      customer_id: 3,
+      restaurant_id: 3,
+    },
+    {
+      id: 4,
+      datetime: "2025-01-20 19:10",
+      total: 150,
+      status: "cancelled",
+      customer_id: 4,
+      restaurant_id: 4,
+    },
+  ],
+  order_items: [
+    { id: 1, order_id: 1, menu_item_id: 1, quantity: 2, unit_price: 80 },
+    { id: 2, order_id: 2, menu_item_id: 2, quantity: 1, unit_price: 120 },
+    { id: 3, order_id: 3, menu_item_id: 4, quantity: 2, unit_price: 150 },
+    { id: 4, order_id: 3, menu_item_id: 5, quantity: 1, unit_price: 180 },
+    { id: 5, order_id: 4, menu_item_id: 6, quantity: 1, unit_price: 90 },
+    { id: 6, order_id: 4, menu_item_id: 7, quantity: 2, unit_price: 30 },
+  ],
+  delivery: [
+    {
+      id: 1,
+      name: "Omar Delivery",
+      phone: "01299999999",
+      restaurant_id: 1,
+      customer_id: 1,
+      customer_address: "Nasr City",
+      arrival_time: "2025-01-18 16:00",
+      departure_time: "2025-01-18 15:45",
+    },
+    {
+      id: 2,
+      name: "Heba Delivery",
+      phone: "01288888888",
+      restaurant_id: 2,
+      customer_id: 2,
+      customer_address: "Heliopolis",
+      arrival_time: "2025-01-18 16:30",
+      departure_time: "2025-01-18 16:10",
+    },
+    {
+      id: 3,
+      name: "Ali Delivery",
+      phone: "01277777777",
+      restaurant_id: 3,
+      customer_id: 3,
+      customer_address: "Maadi",
+      arrival_time: "2025-01-19 14:30",
+      departure_time: "2025-01-19 14:00",
+    },
+  ],
+  payments: [
+    { payment_id: 1, order_id: 1, card: "no", netprice: 200, cash_paid: 200 },
+    { payment_id: 2, order_id: 2, card: "yes", netprice: 120, cash_paid: 0 },
+    { payment_id: 3, order_id: 3, card: "yes", netprice: 330, cash_paid: 0 },
+    { payment_id: 4, order_id: 4, card: "no", netprice: 150, cash_paid: 150 },
+  ],
+  employees: [
+    {
+      id: 1,
+      name: "Mostafa Ibrahim",
+      email: "mostafa@freshfood.com",
+      password: "123456",
+      role: "manager",
+      restaurant_id: 1,
+    },
+    {
+      id: 2,
+      name: "Hany Adel",
+      email: "hany@pizzahouse.com",
+      password: "pizza123",
+      role: "chef",
+      restaurant_id: 2,
+    },
+    {
+      id: 3,
+      name: "Nour Salah",
+      email: "nour@sushicorner.com",
+      password: "sushi123",
+      role: "chef",
+      restaurant_id: 3,
+    },
+    {
+      id: 4,
+      name: "Mona Samir",
+      email: "mona@burgerking.com",
+      password: "burger123",
+      role: "manager",
+      restaurant_id: 4,
+    },
+  ],
+  deliveryDrivers: [
+    {
+      id: 1,
+      name: "Omar Delivery",
+      phone: "01299999999",
+      password: "del123",
+      restaurant_id: 1,
+    },
+    {
+      id: 2,
+      name: "Mohamed Delivery",
+      phone: "01799999999",
+      password: "del123",
+      restaurant_id: 1,
+    },
+    {
+      id: 3,
+      name: "Heba Delivery",
+      phone: "01288888888",
+      password: "del123",
+      restaurant_id: 2,
+    },
+    {
+      id: 4,
+      name: "Ali Delivery",
+      phone: "01888888888",
+      password: "del123",
+      restaurant_id: 2,
+    },
+    {
+      id: 5,
+      name: "Ali Delivery",
+      phone: "01277777777",
+      password: "del123",
+      restaurant_id: 3,
+    },
+    {
+      id: 6,
+      name: "Khaled Delivery",
+      phone: "01677777777",
+      password: "del123",
+      restaurant_id: 3,
+    },
+  ],
+
+  admin: [
+    {
+      id: 99,
+      name: "Admin Fresh Food",
+      phone: "05111111111",
+      password: "admin123",
+      role: "admin",
+      restaurant_id: 1, // ← أهم حاجة!! ده اللي هيحدد مطعمه
+    },
+    {
+      id: 999,
+      name: "Admin Fresh Food",
+      phone: "01111111111",
+      password: "admin123",
+      role: "admin",
+      restaurant_id: 2, // ← أهم حاجة!! ده اللي هيحدد مطعمه
+    },
+    {
+      id: 888,
+      name: "Admin Fresh Food",
+      phone: "04111111111",
+      password: "admin123",
+      role: "admin",
+      restaurant_id: 3, // ← أهم حاجة!! ده اللي هيحدد مطعمه
+    },
+  ],
+
+  validCoupons: {
+    FOODIE30: 30,
+    WELCOME20: 20,
+    FREEMEAL: 100,
+  },
+};
+
+export default dummyData;

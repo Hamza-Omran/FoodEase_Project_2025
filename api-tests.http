@@ -1,0 +1,89 @@
+### Variables
+@baseUrl = http://localhost:3000/api/v1
+@token = 
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Register Customer
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ahmed Ali",
+  "email": "ahmed@example.com",
+  "password": "password123",
+  "role": "customer"
+}
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ahmed@example.com",
+  "password": "password123"
+}
+
+### Get Current User (Replace TOKEN)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{login.response.body.token}}
+
+### Get Restaurants
+GET {{baseUrl}}/restaurants
+
+### Register Owner
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Restaurant Owner",
+  "email": "owner@example.com",
+  "password": "password123",
+  "role": "restaurant_owner"
+}
+
+### Create Restaurant (Use owner token)
+POST {{baseUrl}}/restaurants
+Authorization: Bearer YOUR_OWNER_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "name": "Pizza Palace",
+  "street_address": "123 Main St",
+  "city": "Cairo",
+  "description": "Best pizza in town",
+  "cuisine_type": "Italian"
+}
+
+### Get Menu Items
+GET {{baseUrl}}/restaurants/1/menu
+
+### Add to Cart
+POST {{baseUrl}}/cart/add
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "menu_item_id": 1,
+  "quantity": 2,
+  "notes": "Extra cheese"
+}
+
+### View Cart
+GET {{baseUrl}}/cart
+Authorization: Bearer {{login.response.body.token}}
+
+### Place Order
+POST {{baseUrl}}/orders
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "restaurant_id": 1,
+  "address_id": 1,
+  "payment_method": "cash",
+  "special_instructions": "Ring doorbell"
+}

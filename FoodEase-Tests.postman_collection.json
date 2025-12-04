@@ -1,0 +1,169 @@
+{
+  "info": {
+    "name": "FoodEase API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "customer_token",
+      "value": ""
+    },
+    {
+      "key": "owner_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/health"
+      }
+    },
+    {
+      "name": "Register Customer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "const res = pm.response.json();",
+              "pm.collectionVariables.set('customer_token', res.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Test Customer\",\"email\":\"customer@test.com\",\"password\":\"pass123\",\"role\":\"customer\"}"
+        },
+        "url": "{{base_url}}/auth/register"
+      }
+    },
+    {
+      "name": "Login Customer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Login Success', () => pm.response.to.have.status(200));",
+              "const res = pm.response.json();",
+              "pm.collectionVariables.set('customer_token', res.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"customer@test.com\",\"password\":\"pass123\"}"
+        },
+        "url": "{{base_url}}/auth/login"
+      }
+    },
+    {
+      "name": "Get Current User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Auth Success', () => pm.response.to.have.status(200));",
+              "pm.test('Has User Data', () => {",
+              "  const res = pm.response.json();",
+              "  pm.expect(res.user).to.have.property('email');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{customer_token}}"}],
+        "url": "{{base_url}}/auth/me"
+      }
+    },
+    {
+      "name": "Get Restaurants",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Returns Array', () => {",
+              "  const res = pm.response.json();",
+              "  pm.expect(res).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/restaurants"
+      }
+    },
+    {
+      "name": "Add to Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Cart Updated', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{customer_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"menu_item_id\":1,\"quantity\":2}"
+        },
+        "url": "{{base_url}}/cart/add"
+      }
+    },
+    {
+      "name": "View Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Cart Retrieved', () => pm.response.to.have.status(200));",
+              "pm.test('Has Items', () => {",
+              "  const res = pm.response.json();",
+              "  pm.expect(res).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{customer_token}}"}],
+        "url": "{{base_url}}/cart"
+      }
+    }
+  ]
+}
