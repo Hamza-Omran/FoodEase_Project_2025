@@ -1,74 +1,141 @@
-const cartRepo = require('../repositories/cart.repo');
+const pool = require('../config/db');
 const customerRepo = require('../repositories/customer.repo');
-const AppError = require('../utils/AppError'); // FIXED: Capital 'A'
+const AppError = require('../utils/AppError');
 
-exports.add = async (req, res, next) => {
-  try {
-    const customer = await customerRepo.findByUserId(req.user.id);
-    
-    if (!customer) {
-      return next(new AppError('Customer profile not found', 404));
-    }
-    
-    const { menu_item_id, quantity, notes } = req.body;
-    
-    if (!menu_item_id || !quantity) {
-      return next(new AppError('Menu item and quantity are required', 400));
-    }
-    
-    if (quantity <= 0) {
-      return next(new AppError('Quantity must be greater than 0', 400));
-    }
-    
-    await cartRepo.add(customer.customer_id, menu_item_id, quantity, notes);
-    res.status(201).json({ success: true, message: 'Item added to cart' });
-  } catch (err) {
-    console.error('Add to cart error:', err);
-    next(new AppError(err.message || 'Failed to add item to cart', 500));
-  }
-};
-
+// Get cart items
 exports.getCart = async (req, res, next) => {
   try {
     const customer = await customerRepo.findByUserId(req.user.id);
-    const items = await cartRepo.get(customer.customer_id);
-    res.json(items);
+    if (!customer) {
+      return next(new AppError('Customer not found', 404));
+    }
+
+    const [cartItems] = await pool.query(
+      `SELECT 
+        ci.cart_item_id,
+        ci.quantity,
+        mi.menu_item_id,
+        mi.name,
+        mi.description,
+        mi.price,
+        mi.image_url,
+        r.restaurant_id,
+        r.name as restaurant_name
+      FROM Cart_Items ci
+      JOIN Menu_Items mi ON ci.menu_item_id = mi.menu_item_id
+      JOIN Restaurants r ON mi.restaurant_id = r.restaurant_id
+      WHERE ci.customer_id = ?
+      ORDER BY ci.added_at DESC`,
+      [customer.customer_id]
+    );
+
+    res.json(cartItems);
   } catch (err) {
     next(err);
   }
 };
 
-exports.update = async (req, res, next) => {
+// Add item to cart
+exports.addToCart = async (req, res, next) => {
   try {
-    console.log('Update cart request:', req.params.id, req.body);
-    
+    const { menu_item_id, quantity, notes } = req.body;
+
+    if (!menu_item_id || !quantity) {
+      return next(new AppError('Menu item ID and quantity are required', 400));
+    }
+
     const customer = await customerRepo.findByUserId(req.user.id);
-    
     if (!customer) {
-      return next(new AppError('Customer profile not found', 404));
+      return next(new AppError('Customer not found', 404));
     }
-    
+
+    // Call stored procedure to add to cart
+    await pool.query(
+      'CALL sp_add_to_cart(?, ?, ?)',
+      [customer.customer_id, menu_item_id, quantity]
+    );
+
+    res.status(201).json({ success: true, message: 'Item added to cart' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Update cart item quantity
+exports.updateCartItem = async (req, res, next) => {
+  try {
+    const { cartItemId } = req.params;
     const { quantity } = req.body;
-    
-    if (!quantity || quantity <= 0) {
-      return next(new AppError('Valid quantity is required', 400));
+
+    if (!quantity || quantity < 1) {
+      return next(new AppError('Invalid quantity', 400));
     }
-    
-    await cartRepo.update(customer.customer_id, req.params.id, quantity);
-    
-    console.log('Cart updated successfully');
+
+    const customer = await customerRepo.findByUserId(req.user.id);
+    if (!customer) {
+      return next(new AppError('Customer not found', 404));
+    }
+
+    // Verify cart item belongs to customer
+    const [cartItems] = await pool.query(
+      'SELECT * FROM Cart_Items WHERE cart_item_id = ? AND customer_id = ?',
+      [cartItemId, customer.customer_id]
+    );
+
+    if (!cartItems[0]) {
+      return next(new AppError('Cart item not found', 404));
+    }
+
+    await pool.query(
+      'UPDATE Cart_Items SET quantity = ? WHERE cart_item_id = ?',
+      [quantity, cartItemId]
+    );
+
     res.json({ success: true, message: 'Cart updated' });
   } catch (err) {
-    console.error('Update cart error:', err);
     next(err);
   }
 };
 
-exports.remove = async (req, res, next) => {
+// Remove item from cart
+exports.removeFromCart = async (req, res, next) => {
+  try {
+    const { cartItemId } = req.params;
+
+    const customer = await customerRepo.findByUserId(req.user.id);
+    if (!customer) {
+      return next(new AppError('Customer not found', 404));
+    }
+
+    const [result] = await pool.query(
+      'DELETE FROM Cart_Items WHERE cart_item_id = ? AND customer_id = ?',
+      [cartItemId, customer.customer_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return next(new AppError('Cart item not found', 404));
+    }
+
+    res.json({ success: true, message: 'Item removed from cart' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Clear cart
+exports.clearCart = async (req, res, next) => {
   try {
     const customer = await customerRepo.findByUserId(req.user.id);
-    await cartRepo.remove(customer.customer_id, req.params.id);
-    res.json({ success: true });
+    if (!customer) {
+      return next(new AppError('Customer not found', 404));
+    }
+
+    await pool.query(
+      'DELETE FROM Cart_Items WHERE customer_id = ?',
+      [customer.customer_id]
+    );
+
+    res.json({ success: true, message: 'Cart cleared' });
   } catch (err) {
     next(err);
   }

@@ -22,7 +22,7 @@ export function OrderProvider({ children }) {
       const res = await orderAPI.getMy();
       setOrders(res.data);
     } catch (err) {
-      console.error('Orders fetch error:', err);
+
       setOrders([]);
     }
   };
@@ -44,12 +44,12 @@ export function OrderProvider({ children }) {
   };
 
   return (
-    <OrderContext.Provider value={{ 
-      orders, 
-      fetchOrders, 
-      placeOrder, 
-      assignAndStartDelivery, 
-      completeDelivery 
+    <OrderContext.Provider value={{
+      orders,
+      fetchOrders,
+      placeOrder,
+      assignAndStartDelivery,
+      completeDelivery
     }}>
       {children}
     </OrderContext.Provider>

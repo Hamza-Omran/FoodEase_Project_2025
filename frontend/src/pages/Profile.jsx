@@ -32,7 +32,6 @@ export default function Profile() {
       const res = await api.get(`/customers/${user.id}/profile`);
       setCustomer(res.data);
     } catch (err) {
-      console.error(err);
     }
   };
 
@@ -42,7 +41,6 @@ export default function Profile() {
       setAddresses(res.data);
       setLoading(false);
     } catch (err) {
-      console.error(err);
       setLoading(false);
     }
   };
@@ -92,19 +90,19 @@ export default function Profile() {
               <p className="text-3xl font-bold text-orange-600">
                 {customer.total_orders}
               </p>
-              <p className="text-gray-600">Total Orders</p>
+              <p className="text-gray-900">Total Orders</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-orange-600">
                 {parseFloat(customer.total_spent || 0).toFixed(2)} EGP
               </p>
-              <p className="text-gray-600">Total Spent</p>
+              <p className="text-gray-900">Total Spent</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-orange-600">
                 {customer.loyalty_points}
               </p>
-              <p className="text-gray-600">Loyalty Points</p>
+              <p className="text-gray-900">Loyalty Points</p>
             </div>
           </div>
         </div>
@@ -182,7 +180,7 @@ export default function Profile() {
             >
               <div>
                 <p className="font-bold">{addr.street_address}</p>
-                <p className="text-gray-600">
+                <p className="text-gray-900">
                   {addr.city}, {addr.state}
                 </p>
                 {addr.is_default && (

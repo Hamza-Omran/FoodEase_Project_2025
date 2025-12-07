@@ -21,10 +21,22 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(formData.email, formData.password);
-      navigate("/restaurants");
+      const response = await login(formData.email, formData.password);
+
+      // Redirect based on user role
+      const userRole = response.user.role;
+
+      if (userRole === "restaurant_owner") {
+        navigate("/admin");
+      } else if (userRole === "driver") {
+        navigate("/available-orders");
+      } else if (userRole === "admin") {
+        navigate("/admin/system");
+      } else {
+        // customer or default
+        navigate("/restaurants");
+      }
     } catch (err) {
-      console.error("Login error:", err);
       setError(err.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);
@@ -45,7 +57,7 @@ export default function Login() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to FoodEase
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-900">
             Don't have an account?{" "}
             <Link
               to="/register"
@@ -67,7 +79,7 @@ export default function Login() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-900 mb-1"
               >
                 Email Address
               </label>
@@ -86,7 +98,7 @@ export default function Login() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-900 mb-1"
               >
                 Password
               </label>

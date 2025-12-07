@@ -31,9 +31,7 @@ export function AuthProvider({ children }) {
 
   const register = async (userData) => {
     try {
-      console.log("Registering user:", userData);
       const response = await authAPI.register(userData);
-      console.log("Registration response:", response.data);
 
       const { user, token } = response.data;
 
@@ -42,7 +40,6 @@ export function AuthProvider({ children }) {
       setToken(token);
       setUser(user);
 
-      console.log("Registration successful, user:", user);
       return response.data;
     } catch (err) {
       console.error("Registration error:", err.response?.data || err.message);
@@ -52,9 +49,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      console.log("Logging in:", email);
       const response = await authAPI.login({ email, password });
-      console.log("Login response:", response.data);
 
       const { user, token } = response.data;
 
@@ -62,7 +57,6 @@ export function AuthProvider({ children }) {
       setToken(token);
       setUser(user);
 
-      console.log("Login successful, user:", user);
       return response.data;
     } catch (err) {
       console.error("Login error:", err.response?.data || err.message);

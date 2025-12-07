@@ -1,19 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const addressCtrl = require('../controllers/address.controller');
-const customerCtrl = require('../controllers/customer.controller');
-const auth = require('../middlewares/auth');
-const roles = require('../middlewares/roles');
+const customerController = require('../controllers/customer.controller');
+const addressController = require('../controllers/address.controller');
+const { protect } = require('../middlewares/auth');
 
-// Customer profile
-router.get('/:id/profile', auth, roles('customer'), customerCtrl.getProfile);
-router.put('/:id/profile', auth, roles('customer'), customerCtrl.updateProfile);
+router.use(protect);
 
-// Customer address routes
-router.get('/:id/addresses', auth, addressCtrl.getAddresses);
-router.post('/:id/addresses', auth, addressCtrl.addAddress);
-router.put('/:id/addresses/:addressId', auth, addressCtrl.updateAddress);
-router.delete('/:id/addresses/:addressId', auth, addressCtrl.deleteAddress);
+router.get('/:id/profile', customerController.getProfile);
+router.put('/:id/profile', customerController.updateProfile);
+
+router.get('/:id/addresses', addressController.getAddresses);
+router.post('/:id/addresses', addressController.addAddress);
+router.put('/:id/addresses/:addressId', addressController.updateAddress);
+router.delete('/:id/addresses/:addressId', addressController.deleteAddress);
 
 module.exports = router;
 

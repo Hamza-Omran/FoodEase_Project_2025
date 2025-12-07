@@ -1,9 +1,18 @@
-const http = require('http');
 const app = require('./app');
 const env = require('./config/env');
+const pool = require('./config/db');
 
-const server = http.createServer(app);
+const PORT = env.PORT || 3000;
 
-server.listen(env.PORT, () => {
-  console.log(`Backend listening on http://localhost:${env.PORT}`);
-});
+// Test database connection
+pool.query('SELECT 1')
+  .then(() => {
+
+
+    app.listen(PORT, () => {
+    });
+  })
+  .catch(err => {
+    console.error('Database connection failed:', err);
+    process.exit(1);
+  });

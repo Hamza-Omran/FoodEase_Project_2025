@@ -1,10 +1,11 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import api from "../services/api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function AdminDashboard() {
   const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(null);
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({
@@ -24,12 +25,10 @@ export default function AdminDashboard() {
 
   const fetchRestaurantData = async () => {
     try {
-      console.log("Fetching restaurants for owner:", user.id);
-      const myRestaurantsRes = await api.get("/restaurants/my");
-      console.log("My restaurants response:", myRestaurantsRes.data);
 
-      if (myRestaurantsRes.data.length === 0) {
-        console.warn("No restaurants found for this owner");
+      const myRestaurantsRes = await api.get("/restaurants/my");
+
+      if (!myRestaurantsRes.data || myRestaurantsRes.data.length === 0) {
         setLoading(false);
         return;
       }
@@ -40,7 +39,6 @@ export default function AdminDashboard() {
       const ordersRes = await api.get(
         `/restaurants/${myRestaurant.restaurant_id}/orders`
       );
-      console.log("Orders response:", ordersRes.data);
       setOrders(ordersRes.data);
 
       const total = ordersRes.data.length;
@@ -61,7 +59,6 @@ export default function AdminDashboard() {
       setStats({ total, preparing, onTheWay, delivered, revenue });
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching restaurant data:", err);
       setLoading(false);
     }
   };
@@ -82,7 +79,7 @@ export default function AdminDashboard() {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-4 text-gray-900">No Restaurant Found</h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-900 mb-6">
           You don't have any restaurants registered yet.
         </p>
         <Link
@@ -96,29 +93,29 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-white py-12">
       <div className="max-w-7xl mx-auto px-6">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-12">
           <div className="bg-white p-6 rounded-2xl shadow-xl text-center">
             <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-            <p className="text-gray-600">Total Orders</p>
+            <p className="text-gray-900">Total Orders</p>
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-xl text-center">
             <p className="text-3xl font-bold text-gray-900">{stats.preparing}</p>
-            <p className="text-gray-600">Preparing</p>
+            <p className="text-gray-900">Preparing</p>
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-xl text-center">
             <p className="text-3xl font-bold text-gray-900">{stats.onTheWay}</p>
-            <p className="text-gray-600">On The Way</p>
+            <p className="text-gray-900">On The Way</p>
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-xl text-center">
             <p className="text-3xl font-bold text-gray-900">{stats.delivered}</p>
-            <p className="text-gray-600">Delivered</p>
+            <p className="text-gray-900">Delivered</p>
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-xl text-center">
             <p className="text-3xl font-bold text-gray-900">{stats.revenue} EGP</p>
-            <p className="text-gray-600">Revenue</p>
+            <p className="text-gray-900">Revenue</p>
           </div>
         </div>
 
@@ -151,51 +148,68 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 font-bold text-gray-900">#{order.order_number}</td>
                       <td className="px-6 py-4 text-gray-800">{order.customer_name}</td>
                       <td className="px-6 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-bold ${
-                            order.status === "delivered"
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-bold ${order.status === "delivered"
                               ? "bg-green-100 text-green-800"
                               : order.status === "out_for_delivery"
-                              ? "bg-blue-100 text-blue-800"
-                              : order.status === "preparing"
-                              ? "bg-orange-100 text-orange-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {order.status.replace("_", " ").toUpperCase()}
-                        </span>
+                                ? "bg-blue-100 text-blue-800"
+                                : order.status === "preparing"
+                                  ? "bg-orange-100 text-orange-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                          >
+                            {order.status.replace("_", " ").toUpperCase()}
+                          </span>
+                          {order.status === "delivered" && order.has_review && (
+                            <span className="text-yellow-500" title="Customer left a review">
+                              ⭐
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 font-bold text-orange-600">
                         {parseFloat(order.total_amount).toFixed(2)} EGP
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
+                      <td className="px-6 py-4 text-sm text-gray-900">
                         {new Date(order.order_date).toLocaleString()}
                       </td>
                       <td className="px-6 py-4">
-                        {order.status === "pending" && (
+                        <div className="flex gap-2">
+
                           <button
-                            onClick={() => updateOrderStatus(order.order_id, "confirmed")}
-                            className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+                            onClick={() => navigate(`/admin/order/${order.order_id}`)}
+                            className="bg-orange-600 text-black px-3 py-1 rounded hover:bg-orange-700 text-sm"
                           >
-                            Confirm
+                            Details
                           </button>
-                        )}
-                        {order.status === "confirmed" && (
-                          <button
-                            onClick={() => updateOrderStatus(order.order_id, "preparing")}
-                            className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
-                          >
-                            Start Preparing
-                          </button>
-                        )}
-                        {order.status === "preparing" && (
-                          <button
-                            onClick={() => updateOrderStatus(order.order_id, "ready")}
-                            className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
-                          >
-                            Mark Ready
-                          </button>
-                        )}
+
+                          {/* Status Update Buttons */}
+                          {order.status === "pending" && (
+                            <button
+                              onClick={() => updateOrderStatus(order.order_id, "confirmed")}
+                              className="bg-orange-600 text-black px-3 py-1 rounded hover:bg-orange-700 text-sm"
+                            >
+                              Confirm
+                            </button>
+                          )}
+                          {order.status === "confirmed" && (
+                            <button
+                              onClick={() => updateOrderStatus(order.order_id, "preparing")}
+                              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                            >
+                              Start Preparing
+                            </button>
+                          )}
+                          {order.status === "preparing" && (
+                            <button
+                              onClick={() => updateOrderStatus(order.order_id, "ready")}
+                              className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
+                            >
+                              Mark Ready
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

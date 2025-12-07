@@ -2,6 +2,8 @@ import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import { orderAPI } from '../services/api';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBox } from '@fortawesome/free-solid-svg-icons';
 
 export default function MyOrders() {
   const { user } = useContext(AuthContext);
@@ -20,7 +22,6 @@ export default function MyOrders() {
       setOrders(response.data);
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching orders:', err);
       setLoading(false);
     }
   };
@@ -43,28 +44,28 @@ export default function MyOrders() {
 
   if (orders.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">📦</div>
+      <div className="text-center py-12 px-4">
+        <FontAwesomeIcon icon={faBox} className="text-6xl mb-4 text-gray-300" />
         <h2 className="text-2xl font-bold mb-2">No orders yet</h2>
-        <p className="text-gray-600">Start ordering delicious food!</p>
+        <p className="text-gray-900">Start ordering delicious food!</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">My Orders</h1>
 
       <div className="space-y-4">
         {orders.map((order) => (
           <div
             key={order.order_id}
-            className="bg-white rounded-lg shadow-md p-6"
+            className="bg-white rounded-lg shadow-md p-4 sm:p-6"
           >
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-2">
               <div>
                 <h3 className="font-bold text-lg">Order #{order.order_number}</h3>
-                <p className="text-gray-600">{order.restaurant_name}</p>
+                <p className="text-gray-900">{order.restaurant_name}</p>
                 <p className="text-sm text-gray-500">
                   {new Date(order.order_date).toLocaleDateString("en-US", {
                     year: "numeric",
@@ -75,7 +76,7 @@ export default function MyOrders() {
                   })}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-left sm:text-right w-full sm:w-auto flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end mt-2 sm:mt-0">
                 <span
                   className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
                     order.status
@@ -83,7 +84,7 @@ export default function MyOrders() {
                 >
                   {order.status.replace("_", " ").toUpperCase()}
                 </span>
-                <p className="mt-2 font-bold text-lg">
+                <p className="mt-0 sm:mt-2 font-bold text-lg">
                   {parseFloat(order.total_amount).toFixed(2)} EGP
                 </p>
               </div>
@@ -92,14 +93,18 @@ export default function MyOrders() {
             <div className="flex gap-2">
               <Link
                 to={`/orders/${order.order_id}/track`}
-                className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
+                className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 text-center flex-1 sm:flex-none"
               >
                 Track Order
               </Link>
-              {order.status === "delivered" && !order.rating && (
-                <button className="border border-orange-600 text-orange-600 px-4 py-2 rounded hover:bg-orange-50">
+
+              {order.status === 'delivered' && !order.has_review && (
+                <Link
+                  to={`/orders/${order.order_id}/review`}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-center flex-1 sm:flex-none"
+                >
                   Leave Review
-                </button>
+                </Link>
               )}
             </div>
           </div>

@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { customerAPI, createOrder } from "../services/api";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMoneyBillWave, faCreditCard } from '@fortawesome/free-solid-svg-icons';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -32,11 +34,9 @@ export default function CheckoutPage() {
 
   const fetchAddresses = async () => {
     try {
-      console.log('Fetching addresses for user:', user.id);
       const response = await customerAPI.getAddresses(user.id);
-      console.log('Addresses response:', response.data);
       setAddresses(response.data || []);
-      
+
       // Auto-select default address
       const defaultAddr = response.data.find(addr => addr.is_default);
       if (defaultAddr) {
@@ -45,8 +45,6 @@ export default function CheckoutPage() {
         setSelectedAddress(response.data[0].address_id);
       }
     } catch (err) {
-      console.error('Error fetching addresses:', err);
-      console.error('Error response:', err.response?.data);
       setError(err.response?.data?.message || 'Failed to load addresses');
     }
   };
@@ -70,9 +68,7 @@ export default function CheckoutPage() {
         coupon_code: null,
       };
 
-      console.log('CheckoutPage: Placing order with data:', payload);
       const order = await createOrder(payload);
-      console.log('CheckoutPage: Order created:', order);
 
       // Clear local cart state immediately; DB trigger clears server cart
       clearCartOnOrder();
@@ -80,14 +76,13 @@ export default function CheckoutPage() {
       // Redirect to home/restaurants
       navigate('/restaurants');
     } catch (err) {
-      console.error('Order error:', err);
       setError(err.response?.data?.message || 'Failed to place order');
     }
   };
 
   if (!cart || cart.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-16">
+      <div className="max-w-4xl mx-auto text-center py-16 px-4">
         <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
         <button
           onClick={() => navigate("/restaurants")}
@@ -106,7 +101,7 @@ export default function CheckoutPage() {
   const restaurantName = cart[0]?.restaurant_name || "Restaurant";
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6 text-orange-600">Checkout</h1>
 
       {error && (
@@ -116,18 +111,18 @@ export default function CheckoutPage() {
       )}
 
       {/* Order Items */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
         <h2 className="text-xl font-bold mb-4 text-orange-600">
           Order Items from {restaurantName}
         </h2>
         {cart.map((item) => (
           <div
             key={item.cart_item_id}
-            className="flex justify-between py-2 border-b"
+            className="flex justify-between py-2 border-b last:border-0"
           >
             <div>
               <p className="font-medium text-gray-800">{item.name}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 Quantity: {item.quantity}
               </p>
             </div>
@@ -139,12 +134,12 @@ export default function CheckoutPage() {
       </div>
 
       {/* Delivery Address */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
         <h2 className="text-xl font-bold mb-4 text-orange-600">Delivery Address</h2>
 
         {addresses.length === 0 ? (
           <div className="text-center py-4">
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-900 mb-4">
               No addresses found. Please add one.
             </p>
             <button
@@ -159,14 +154,13 @@ export default function CheckoutPage() {
             <div
               key={addr.address_id}
               onClick={() => setSelectedAddress(addr.address_id)}
-              className={`p-4 border rounded-lg mb-2 cursor-pointer ${
-                selectedAddress === addr.address_id
+              className={`p-4 border rounded-lg mb-2 cursor-pointer transition-colors ${selectedAddress === addr.address_id
                   ? "border-orange-500 bg-orange-50"
                   : "border-gray-300 hover:border-orange-300"
-              }`}
+                }`}
             >
               <p className="font-medium text-gray-800">{addr.address_label}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 {addr.street_address}, {addr.city}
               </p>
             </div>
@@ -175,11 +169,11 @@ export default function CheckoutPage() {
       </div>
 
       {/* Payment Method */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
         <h2 className="text-xl font-bold mb-4 text-orange-600">Payment Method</h2>
 
         <div className="space-y-2">
-          <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+          <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
             <input
               type="radio"
               name="payment"
@@ -188,10 +182,11 @@ export default function CheckoutPage() {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="mr-3 text-orange-600 focus:ring-orange-500"
             />
+            <FontAwesomeIcon icon={faMoneyBillWave} className="text-green-600 mr-2" />
             <span className="text-gray-800">Cash on Delivery</span>
           </label>
 
-          <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+          <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
             <input
               type="radio"
               name="payment"
@@ -200,10 +195,11 @@ export default function CheckoutPage() {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="mr-3 text-orange-600 focus:ring-orange-500"
             />
+            <FontAwesomeIcon icon={faCreditCard} className="text-blue-600 mr-2" />
             <span className="text-gray-800">Credit Card</span>
           </label>
 
-          <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+          <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
             <input
               type="radio"
               name="payment"
@@ -212,13 +208,14 @@ export default function CheckoutPage() {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="mr-3 text-orange-600 focus:ring-orange-500"
             />
+            <FontAwesomeIcon icon={faCreditCard} className="text-purple-600 mr-2" />
             <span className="text-gray-800">Debit Card</span>
           </label>
         </div>
       </div>
 
       {/* Special Instructions */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
         <h2 className="text-xl font-bold mb-4 text-orange-600">Special Instructions</h2>
         <textarea
           value={specialInstructions}
@@ -230,19 +227,19 @@ export default function CheckoutPage() {
       </div>
 
       {/* Order Summary */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
         <h2 className="text-xl font-bold mb-4 text-orange-600">Order Summary</h2>
 
         <div className="space-y-2">
-          <div className="flex justify-between text-gray-700">
+          <div className="flex justify-between text-gray-900">
             <span>Subtotal</span>
             <span>{subtotal.toFixed(2)} EGP</span>
           </div>
-          <div className="flex justify-between text-gray-700">
+          <div className="flex justify-between text-gray-900">
             <span>Delivery Fee</span>
             <span>{deliveryFee.toFixed(2)} EGP</span>
           </div>
-          <div className="flex justify-between text-gray-700">
+          <div className="flex justify-between text-gray-900">
             <span>Tax (14%)</span>
             <span>{tax.toFixed(2)} EGP</span>
           </div>
@@ -257,7 +254,7 @@ export default function CheckoutPage() {
       <button
         onClick={handlePlaceOrder}
         disabled={loading || !selectedAddress || addresses.length === 0}
-        className="w-full bg-orange-600 text-white py-4 rounded-lg hover:bg-orange-700 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-orange-600 text-white py-4 rounded-lg hover:bg-orange-700 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {loading
           ? "Placing Order..."

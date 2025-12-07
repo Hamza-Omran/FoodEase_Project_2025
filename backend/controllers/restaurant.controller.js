@@ -1,8 +1,9 @@
-const restaurantRepo = require('../repositories/restaurant.repo');
 const pool = require('../config/db');
+const restaurantRepo = require('../repositories/restaurant.repo');
 const AppError = require('../utils/AppError');
 
-exports.list = async (req, res, next) => {
+// Get all restaurants (full data)
+exports.getAll = async (req, res, next) => {
   try {
     const restaurants = await restaurantRepo.list();
     res.json(restaurants);
@@ -11,10 +12,54 @@ exports.list = async (req, res, next) => {
   }
 };
 
-exports.get = async (req, res, next) => {
+// Optimized: Get restaurants for home page (minimal fields)
+exports.getForHome = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const restaurant = await restaurantRepo.get(id);
+    const [restaurants] = await pool.query(
+      `SELECT restaurant_id, name, image_url, rating, cuisine_type, estimated_delivery_time, delivery_fee, is_featured
+       FROM Restaurants 
+       WHERE status = 'active' 
+       ORDER BY is_featured DESC, rating DESC 
+       LIMIT 12`
+    );
+    res.json(restaurants);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Optimized: Get restaurants for search (filtered fields)
+exports.getForSearch = async (req, res, next) => {
+  try {
+    const { cuisine, city } = req.query;
+
+    let query = `SELECT restaurant_id, name, image_url, cuisine_type, 
+                 estimated_delivery_time, delivery_fee, city, description
+                 FROM Restaurants WHERE status = 'active'`;
+    const params = [];
+
+    if (cuisine) {
+      query += ' AND cuisine_type = ?';
+      params.push(cuisine);
+    }
+    if (city) {
+      query += ' AND city = ?';
+      params.push(city);
+    }
+
+    query += ' ORDER BY name ASC';
+
+    const [restaurants] = await pool.query(query, params);
+    res.json(restaurants);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get restaurant by ID
+exports.getById = async (req, res, next) => {
+  try {
+    const restaurant = await restaurantRepo.get(req.params.id);
     if (!restaurant) {
       return next(new AppError('Restaurant not found', 404));
     }
@@ -24,25 +69,34 @@ exports.get = async (req, res, next) => {
   }
 };
 
-exports.create = async (req, res, next) => {
+// Get restaurants owned by logged-in user
+exports.getMy = async (req, res, next) => {
   try {
-    if (req.user.role !== 'restaurant_owner' && req.user.role !== 'admin') {
-      return next(new AppError('Only restaurant owners can create restaurants', 403));
-    }
 
-    // Check if owner already has a restaurant
-    const [[existing]] = await pool.query(
-      'SELECT restaurant_id FROM Restaurants WHERE owner_id = ?',
+    const [restaurants] = await pool.query(
+      'SELECT * FROM Restaurants WHERE owner_id = ?',
       [req.user.id]
     );
 
-    if (existing) {
-      return next(new AppError('You already have a restaurant. Each owner can only have one restaurant.', 400));
-    }
+    res.json(restaurants);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Create restaurant
+exports.create = async (req, res, next) => {
+  try {
+    const { name, street_address, city, description, cuisine_type, phone } = req.body;
 
     const restaurant = await restaurantRepo.create({
-      ...req.body,
       owner_id: req.user.id,
+      name,
+      street_address,
+      city,
+      description,
+      cuisine_type,
+      phone
     });
 
     res.status(201).json(restaurant);
@@ -51,129 +105,79 @@ exports.create = async (req, res, next) => {
   }
 };
 
+// Update restaurant
 exports.update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
-    const [[restaurant]] = await pool.query(
+
+    // Verify ownership or admin
+    const [restaurants] = await pool.query(
       'SELECT owner_id FROM Restaurants WHERE restaurant_id = ?',
       [id]
     );
-    
-    if (!restaurant) {
+
+    if (!restaurants[0]) {
       return next(new AppError('Restaurant not found', 404));
     }
-    
-    if (req.user.role === 'restaurant_owner' && restaurant.owner_id !== req.user.id) {
-      return next(new AppError('Forbidden', 403));
+
+    if (req.user.role !== 'admin' && restaurants[0].owner_id !== req.user.id) {
+      return next(new AppError('Not authorized', 403));
     }
 
-    const updated = await restaurantRepo.update(id, req.body);
-    res.json(updated);
+    const restaurant = await restaurantRepo.update(id, req.body);
+    res.json(restaurant);
   } catch (err) {
     next(err);
   }
 };
 
-exports.remove = async (req, res, next) => {
+// Delete restaurant
+exports.delete = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    
-    const [[restaurant]] = await pool.query(
-      'SELECT owner_id FROM Restaurants WHERE restaurant_id = ?',
-      [id]
-    );
-    
-    if (!restaurant) {
-      return next(new AppError('Restaurant not found', 404));
-    }
-    
-    if (req.user.role === 'restaurant_owner' && restaurant.owner_id !== req.user.id) {
-      return next(new AppError('Forbidden', 403));
-    }
-
-    await restaurantRepo.remove(id);
+    await restaurantRepo.remove(req.params.id);
     res.json({ success: true });
   } catch (err) {
     next(err);
   }
 };
 
-exports.getMenu = async (req, res, next) => {
+// Get restaurant orders (for owner dashboard)
+exports.getRestaurantOrders = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const [items] = await pool.query(
-      `SELECT mi.*, mc.name as category_name
-       FROM Menu_Items mi
-       LEFT JOIN Menu_Categories mc ON mi.category_id = mc.category_id
-       WHERE mi.restaurant_id = ?
-       ORDER BY mc.display_order, mi.name`,
-      [id]
-    );
-    res.json(items);
-  } catch (err) {
-    next(err);
-  }
-};
 
-exports.getCategories = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const [cats] = await pool.query(
-      'SELECT * FROM Menu_Categories WHERE restaurant_id = ? ORDER BY display_order',
-      [id]
-    );
-    res.json(cats);
-  } catch (err) {
-    next(err);
-  }
-};
+    // Verify restaurant ownership (unless admin)
+    if (req.user.role === 'restaurant_owner') {
+      const [restaurants] = await pool.query(
+        'SELECT owner_id FROM Restaurants WHERE restaurant_id = ?',
+        [id]
+      );
 
-exports.createCategory = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { name, description } = req.body;
+      if (!restaurants[0]) {
+        return next(new AppError('Restaurant not found', 404));
+      }
 
-    const [[rest]] = await pool.query('SELECT owner_id FROM Restaurants WHERE restaurant_id = ?', [id]);
-    if (!rest || rest.owner_id !== req.user.id) {
-      return next(new AppError('Forbidden', 403));
+      if (restaurants[0].owner_id !== req.user.id) {
+        return next(new AppError('Not authorized to view these orders', 403));
+      }
     }
 
-    const [result] = await pool.query(
-      'INSERT INTO Menu_Categories (restaurant_id, name, description) VALUES (?, ?, ?)',
-      [id, name, description]
-    );
-    res.status(201).json({ category_id: result.insertId, name });
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.getOrders = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    const [[rest]] = await pool.query('SELECT owner_id FROM Restaurants WHERE restaurant_id = ?', [id]);
-    if (!rest) {
-      return next(new AppError('Restaurant not found', 404));
-    }
-    if (req.user.role === 'restaurant_owner' && rest.owner_id !== req.user.id) {
-      return next(new AppError('Forbidden', 403));
-    }
-
-    const [orders] = await pool.query(
-      `SELECT 
-         o.*,
-         u.full_name as customer_name,
-         ca.street_address as delivery_address
-       FROM Orders o
-       JOIN Customers c ON o.customer_id = c.customer_id
-       JOIN Users u ON c.user_id = u.user_id
-       JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
-       WHERE o.restaurant_id = ?
-       ORDER BY o.order_date DESC`,
-      [id]
-    );
+    const [orders] = await pool.query(`
+      SELECT 
+        o.*,
+        u.full_name as customer_name,
+        u.phone as customer_phone,
+        ca.street_address as delivery_address,
+        ca.city as delivery_city,
+        IF(rr.review_id IS NOT NULL, TRUE, FALSE) as has_review
+      FROM Orders o
+      JOIN Customers c ON o.customer_id = c.customer_id
+      JOIN Users u ON c.user_id = u.user_id
+      JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
+      LEFT JOIN Restaurant_Reviews rr ON o.order_id = rr.order_id
+      WHERE o.restaurant_id = ?
+      ORDER BY o.order_date DESC
+    `, [id]);
 
     res.json(orders);
   } catch (err) {

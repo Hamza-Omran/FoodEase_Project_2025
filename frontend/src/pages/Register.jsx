@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import dummyData from "../services/data";
+
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -27,49 +27,47 @@ export default function Register() {
     e.preventDefault();
     setError("");
 
-    console.log("📝 Form submitted with data:", { ...form, password: "***", confirmPassword: "***" });
 
     // Validation
     if (!form.name || !form.email || !form.password) {
       setError("Please fill in all required fields");
-      console.log("❌ Validation failed: Missing fields");
       return;
     }
 
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match");
-      console.log("❌ Validation failed: Password mismatch");
       return;
     }
 
     if (form.password.length < 6) {
       setError("Password must be at least 6 characters");
-      console.log("❌ Validation failed: Password too short");
       return;
     }
 
-    console.log("✅ Validation passed");
     setLoading(true);
 
     try {
-      console.log("📡 Calling register API...");
-      let result;
-      const { name, email, phone, password, role, restaurantId } = form;
+      const { name, email, phone, password, role } = form;
 
-      result = await register({
+      const result = await register({
         name,
         email,
         phone,
         password,
       });
 
-      console.log("✅ Registration successful:", result);
       alert("Registration successful! Welcome to FoodEase");
-      navigate("/restaurants");
+
+      // Redirect based on role
+      if (result.user.role === "restaurant_owner") {
+        navigate("/admin");
+      } else if (result.user.role === "driver") {
+        navigate("/delivery");
+      } else {
+        navigate("/restaurants");
+      }
     } catch (err) {
-      console.error("❌ Registration failed:", err);
       const errorMsg = err.response?.data?.message || err.message || "Registration failed. Please try again.";
-      console.error("Error message:", errorMsg);
       setError(errorMsg);
       setLoading(false);
     }
@@ -79,10 +77,8 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
+          <p className="mt-2 text-center text-sm text-gray-900">
             Already have an account?{" "}
             <Link to="/login" className="font-medium text-orange-600 hover:text-orange-500">
               Sign in
@@ -99,7 +95,7 @@ export default function Register() {
 
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-1">
                 Full Name *
               </label>
               <input
@@ -115,7 +111,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-1">
                 Email Address *
               </label>
               <input
@@ -131,7 +127,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-900 mb-1">
                 Phone Number (Optional)
               </label>
               <input
@@ -146,7 +142,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-1">
                 Password *
               </label>
               <input
@@ -162,7 +158,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900 mb-1">
                 Confirm Password *
               </label>
               <input

@@ -2,31 +2,31 @@ const pool = require('../config/db');
 
 module.exports = {
   findByUserId: async (userId) => {
-    console.log('🔍 Looking for customer with user_id:', userId);
-    
+
+
     const [rows] = await pool.query(
       'SELECT * FROM Customers WHERE user_id = ?',
       [userId]
     );
-    
+
     if (rows[0]) {
-      console.log('✅ Customer found:', rows[0].customer_id);
+
     } else {
-      console.warn('⚠️ No customer found for user_id:', userId);
+
     }
-    
+
     return rows[0];
   },
 
   getAddresses: async (customerId) => {
-    console.log('📍 Getting addresses for customer:', customerId);
-    
+
+
     const [rows] = await pool.query(
-      'SELECT * FROM Customer_Addresses WHERE customer_id = ? ORDER BY is_default DESC, created_at DESC',
+      'SELECT * FROM Customer_Addresses WHERE customer_id = ? ORDER BY is_default DESC, address_id DESC',
       [customerId]
     );
-    
-    console.log(`✅ Found ${rows.length} addresses`);
+
+
     return rows;
   },
 
@@ -38,12 +38,12 @@ module.exports = {
   },
 
   addAddress: async (customerId, addressData) => {
-    const { address_label, street_address, city, state, postal_code, is_default } = addressData;
-    
+    const { address_label, street_address, city, is_default } = addressData;
+
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
-      
+
       // If setting as default, unset other defaults
       if (is_default) {
         await connection.query(
@@ -51,14 +51,14 @@ module.exports = {
           [customerId]
         );
       }
-      
+
       const [result] = await connection.query(
         `INSERT INTO Customer_Addresses 
-         (customer_id, address_label, street_address, city, state, postal_code, is_default) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [customerId, address_label, street_address, city, state, postal_code, is_default || false]
+         (customer_id, address_label, street_address, city, is_default) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [customerId, address_label, street_address, city, is_default || false]
       );
-      
+
       await connection.commit();
       return { address_id: result.insertId, ...addressData };
     } catch (error) {
@@ -70,12 +70,12 @@ module.exports = {
   },
 
   updateAddress: async (customerId, addressId, addressData) => {
-    const { address_label, street_address, city, state, postal_code, is_default } = addressData;
-    
+    const { address_label, street_address, city, is_default } = addressData;
+
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
-      
+
       // If setting as default, unset other defaults
       if (is_default) {
         await connection.query(
@@ -83,14 +83,14 @@ module.exports = {
           [customerId, addressId]
         );
       }
-      
+
       await connection.query(
         `UPDATE Customer_Addresses 
-         SET address_label = ?, street_address = ?, city = ?, state = ?, postal_code = ?, is_default = ?
+         SET address_label = ?, street_address = ?, city = ?, is_default = ?
          WHERE address_id = ? AND customer_id = ?`,
-        [address_label, street_address, city, state, postal_code, is_default || false, addressId, customerId]
+        [address_label, street_address, city, is_default || false, addressId, customerId]
       );
-      
+
       await connection.commit();
       return { address_id: addressId, ...addressData };
     } catch (error) {

@@ -49,16 +49,13 @@ export function CartProvider({ children }) {
 
   const updateCartItem = async (cartItemId, quantity) => {
     try {
-      console.log("Updating cart item:", cartItemId, "to quantity:", quantity);
 
       if (quantity <= 0) {
-        console.log("Quantity is 0 or less, removing item");
         await removeFromCart(cartItemId);
         return;
       }
 
       await cartAPI.update(cartItemId, { quantity });
-      console.log("Update successful, fetching cart");
       await fetchCart();
     } catch (err) {
       console.error("Update cart error:", err);
@@ -82,7 +79,6 @@ export function CartProvider({ children }) {
 
   // Call this right after placing order: clear local state now, then next time we reload, DB is already empty
   const clearCartOnOrder = () => {
-    console.log("Clearing cart locally after order placement");
     setCart([]);
   };
 

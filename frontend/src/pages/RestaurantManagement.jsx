@@ -1,8 +1,9 @@
 // src/pages/admin/RestaurantManagement.jsx
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
-import api from "../services/api";
+import { restaurantAPI, menuAPI } from "../services/api";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function RestaurantManagement() {
   const { user, logout } = useContext(AuthContext);
@@ -11,6 +12,7 @@ export default function RestaurantManagement() {
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showItemForm, setShowItemForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -26,8 +28,6 @@ export default function RestaurantManagement() {
     description: ""
   });
   const [imagePreview, setImagePreview] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     if (user && user.role === "restaurant_owner") {
@@ -35,84 +35,129 @@ export default function RestaurantManagement() {
     }
   }, [user]);
 
+
+  useEffect(() => {
+    if (restaurant) {
+      fetchMenuItems();
+      fetchCategories();
+    }
+  }, [restaurant]);
+
   const fetchRestaurantData = async () => {
     try {
-      console.log('Fetching my restaurants...');
-      setLoading(true);
-      const restRes = await api.get("/restaurants/my");
-      console.log('My restaurants:', restRes.data);
+      const myRestaurantsRes = await restaurantAPI.getMy();
 
-      if (restRes.data.length === 0) {
-        console.warn('No restaurants for this owner');
-        setError("You don't have any restaurants yet.");
+      if (!myRestaurantsRes.data || myRestaurantsRes.data.length === 0) {
         setLoading(false);
         return;
       }
 
-      const myRest = restRes.data[0];
-      setRestaurant(myRest);
+      const myRestaurant = myRestaurantsRes.data[0];
+      setRestaurant(myRestaurant);
 
-      const [menuRes, catRes] = await Promise.all([
-        api.get(`/restaurants/${myRest.restaurant_id}/menu`),
-        api.get(`/restaurants/${myRest.restaurant_id}/categories`),
-      ]);
-
-      setMenuItems(menuRes.data);
-      setCategories(catRes.data);
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching restaurant data:', err);
-      setError(err.response?.data?.message || 'Failed to load restaurant data');
       setLoading(false);
     }
   };
 
+  const fetchMenuItems = async () => {
+    try {
+      if (!restaurant) {
+        return;
+      }
+
+      const response = await menuAPI.getMenuItems(restaurant.restaurant_id);
+      setMenuItems(response.data || []);
+    } catch (err) {
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      if (!restaurant) {
+        return;
+      }
+
+      const response = await menuAPI.getCategories(restaurant.restaurant_id);
+      setCategories(response.data || []);
+    } catch (err) {
+    }
+  };
+
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+
+    const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+    return `http://localhost:3000/${cleanPath}`;
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    setNewItem({ ...newItem, image: file });
-    
-    // Show preview
     if (file) {
+      setNewItem({ ...newItem, image: file });
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
-    } else {
-      setImagePreview(null);
     }
   };
 
   const handleAddItem = async (e) => {
     e.preventDefault();
     try {
+
+      if (!newItem.name || !newItem.price) {
+        alert('Name and price are required');
+        return;
+      }
+
+
       const formData = new FormData();
       formData.append('name', newItem.name);
-      formData.append('description', newItem.description);
-      formData.append('price', newItem.price);
-      formData.append('category_id', newItem.category_id);
+      formData.append('description', newItem.description || '');
+      formData.append('price', parseFloat(newItem.price));
+
+      if (newItem.category_id) {
+        formData.append('category_id', parseInt(newItem.category_id));
+      }
+
+
       if (newItem.image) {
         formData.append('image', newItem.image);
       }
 
-      if (editingItem) {
-        await api.put(`/menu-items/${editingItem.menu_item_id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-      } else {
-        await api.post(`/restaurants/${restaurant.restaurant_id}/menu`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-      }
 
+
+      const response = await axios.post(
+        `http://localhost:3000/api/v1/restaurants/${restaurant.restaurant_id}/menu`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+
+      alert('Menu item added successfully!');
       setShowItemForm(false);
-      setEditingItem(null);
-      setNewItem({ name: "", description: "", price: "", category_id: "", image: null });
+      setNewItem({
+        name: "",
+        description: "",
+        price: "",
+        category_id: "",
+        image: null
+      });
       setImagePreview(null);
-      fetchRestaurantData();
+      fetchMenuItems();
     } catch (err) {
-      console.error('Failed to save item:', err);
-      alert('Failed to save item');
+      alert(err.response?.data?.message || 'Failed to add menu item');
     }
   };
 
@@ -122,18 +167,67 @@ export default function RestaurantManagement() {
       name: item.name,
       description: item.description || "",
       price: item.price,
-      category_id: item.category_id,
+      category_id: item.category_id || "",
       image: null
     });
-    setImagePreview(item.image_url && item.image_url.startsWith('/uploads') ? `http://localhost:3000${item.image_url}` : null);
+    setImagePreview(getImageUrl(item.image_url));
     setShowItemForm(true);
   };
 
-  const handleDeleteItem = async (itemId) => {
-    if (!window.confirm('Delete this item?')) return;
+  const handleUpdateItem = async (e) => {
+    e.preventDefault();
     try {
-      await api.delete(`/menu-items/${itemId}`);
-      fetchRestaurantData();
+
+
+      const formData = new FormData();
+      formData.append('name', newItem.name);
+      formData.append('description', newItem.description || '');
+      formData.append('price', parseFloat(newItem.price));
+
+      if (newItem.category_id) {
+        formData.append('category_id', parseInt(newItem.category_id));
+      }
+
+
+      if (newItem.image) {
+        formData.append('image', newItem.image);
+      }
+
+      const response = await axios.put(
+        `http://localhost:3000/api/v1/restaurants/${restaurant.restaurant_id}/menu/${editingItem.menu_item_id}`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+
+      alert('Menu item updated!');
+      setShowItemForm(false);
+      setEditingItem(null);
+      setNewItem({
+        name: "",
+        description: "",
+        price: "",
+        category_id: "",
+        image: null
+      });
+      setImagePreview(null);
+      fetchMenuItems();
+    } catch (err) {
+      alert('Failed to update item');
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    if (!confirm('Delete this item?')) return;
+    try {
+      await menuAPI.deleteItem(restaurant.restaurant_id, itemId);
+      alert('Item deleted!');
+      fetchMenuItems();
     } catch (err) {
       alert('Failed to delete item');
     }
@@ -142,195 +236,237 @@ export default function RestaurantManagement() {
   const handleAddCategory = async (e) => {
     e.preventDefault();
     try {
-      await api.post(`/restaurants/${restaurant.restaurant_id}/categories`, newCategory);
+      await menuAPI.createCategory(restaurant.restaurant_id, newCategory);
+      alert('Category added!');
       setShowCategoryForm(false);
       setNewCategory({ name: "", description: "" });
-      fetchRestaurantData();
+      fetchCategories();
     } catch (err) {
       alert('Failed to add category');
     }
   };
 
-  if (loading) {
-    return <div className="text-center py-12">Loading...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600 mb-4">{error}</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-12">Loading...</div>;
 
   if (!restaurant) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900">No Restaurant Found</h2>
-        <p className="text-gray-600">You don't have a restaurant registered yet.</p>
+        <h2 className="text-2xl font-bold mb-4">No Restaurant Found</h2>
+        <p className="text-gray-900 mb-6">Create your restaurant to start managing menu items.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4">
-      {/* Categories Section */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Categories</h2>
-          <button
-            onClick={() => setShowCategoryForm(!showCategoryForm)}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            {showCategoryForm ? "Cancel" : "Add Category"}
-          </button>
-        </div>
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-7xl mx-auto px-6">
 
-        {showCategoryForm && (
-          <form onSubmit={handleAddCategory} className="mb-4 p-4 border rounded">
-            <input
-              type="text"
-              placeholder="Category Name"
-              value={newCategory.name}
-              onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-              className="w-full p-2 border rounded mb-2"
-              required
-            />
-            <textarea
-              placeholder="Description"
-              value={newCategory.description}
-              onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
-              className="w-full p-2 border rounded mb-2"
-            />
-            <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-              Save Category
-            </button>
-          </form>
-        )}
-
-        <div className="flex gap-2 flex-wrap">
-          {categories.map((cat) => (
-            <span key={cat.category_id} className="px-3 py-1 bg-gray-200 text-gray-900 rounded">
-              {cat.name}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Menu Items Section */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Menu Items</h2>
-          <button
-            onClick={() => {
-              setShowItemForm(!showItemForm);
-              setEditingItem(null);
-              setNewItem({ name: "", description: "", price: "", category_id: "", image: null });
-              setImagePreview(null);
-            }}
-            className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
-          >
-            {showItemForm ? "Cancel" : "Add Item"}
-          </button>
-        </div>
-
-        {showItemForm && (
-          <form onSubmit={handleAddItem} className="mb-6 p-4 border rounded">
-            <input
-              type="text"
-              placeholder="Item Name"
-              value={newItem.name}
-              onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-              className="w-full p-2 border rounded mb-2"
-              required
-            />
-            <textarea
-              placeholder="Description"
-              value={newItem.description}
-              onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-              className="w-full p-2 border rounded mb-2"
-            />
-            <input
-              type="number"
-              step="0.01"
-              placeholder="Price"
-              value={newItem.price}
-              onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-              className="w-full p-2 border rounded mb-2"
-              required
-            />
-            <select
-              value={newItem.category_id}
-              onChange={(e) => setNewItem({ ...newItem, category_id: e.target.value })}
-              className="w-full p-2 border rounded mb-2"
-              required
-            >
-              <option value="">Select Category</option>
-              {categories.map((cat) => (
-                <option key={cat.category_id} value={cat.category_id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Image Upload */}
-            <div className="mb-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Upload Image
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="w-full p-2 border rounded"
-              />
-              {imagePreview && (
-                <img src={imagePreview} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded" />
-              )}
-            </div>
-
+        {/* Categories Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-900">Categories</h3>
             <button
-              type="submit"
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              onClick={() => setShowCategoryForm(!showCategoryForm)}
+              className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700"
             >
-              {editingItem ? "Update Item" : "Save Item"}
+              {showCategoryForm ? "Cancel" : "Add Category"}
             </button>
-          </form>
-        )}
+          </div>
 
-        <div className="space-y-2">
-          {menuItems.map((item) => (
-            <div key={item.menu_item_id} className="border rounded p-4 flex justify-between items-center">
-              <div className="flex gap-4 items-center">
-                {item.image_url && item.image_url.startsWith('/uploads') && (
-                  <img
-                    src={`http://localhost:3000${item.image_url}`}
-                    alt={item.name}
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                )}
-                <div>
-                  <p className="font-bold text-gray-900">{item.name}</p>
-                  <p className="text-sm text-gray-600">{item.category_name}</p>
-                  <p className="text-orange-600 font-semibold">{parseFloat(item.price).toFixed(2)} EGP</p>
+          {showCategoryForm && (
+            <form onSubmit={handleAddCategory} className="mb-6 p-4 border rounded-lg bg-gray-50">
+              <input
+                type="text"
+                placeholder="Category Name"
+                value={newCategory.name}
+                onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                required
+              />
+              <textarea
+                placeholder="Description (optional)"
+                value={newCategory.description}
+                onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                rows="2"
+              />
+              <button
+                type="submit"
+                className="bg-orange-600 text-black px-6 py-2 rounded-lg hover:bg-orange-700"
+              >
+                Save Category
+              </button>
+            </form>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {categories.map((cat) => (
+              <div key={cat.category_id} className="border rounded-lg p-4 bg-gray-50">
+                <h4 className="font-bold text-lg text-black">{cat.name}</h4>
+                <p className="text-sm text-gray-900">{cat.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Menu Items Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-orange-600">Menu Items</h3>
+            <button
+              onClick={() => {
+                setEditingItem(null);
+                setNewItem({
+                  name: "",
+                  description: "",
+                  price: "",
+                  category_id: "",
+                  image: null
+                });
+                setImagePreview(null);
+                setShowItemForm(true);
+              }}
+              className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700"
+            >
+              Add Menu Item
+            </button>
+          </div>
+
+          {showItemForm && (
+            <form
+              onSubmit={editingItem ? handleUpdateItem : handleAddItem}
+              className="mb-8 p-6 border rounded-lg bg-gray-50"
+            >
+              <h4 className="text-xl font-bold mb-4 text-black">
+                {editingItem ? "Edit Menu Item" : "Add New Menu Item"}
+              </h4>
+
+              {/* Image Upload */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-black mb-2">
+                  Item Image
+                </label>
+                <div className="flex items-center gap-4">
+                  {imagePreview && (
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-32 h-32 object-cover rounded-lg"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="w-full p-2 border rounded-lg text-black"
+                    />
+                    <p className="text-xs text-gray-900 mt-1">
+                      Upload an image (PNG, JPG, JPEG - max 10MB)
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-2">
+
+              <input
+                type="text"
+                placeholder="Item Name"
+                value={newItem.name}
+                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                required
+              />
+
+              <textarea
+                placeholder="Description"
+                value={newItem.description}
+                onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                rows="3"
+              />
+
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Price (EGP)"
+                value={newItem.price}
+                onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                required
+              />
+
+              <select
+                value={newItem.category_id}
+                onChange={(e) => setNewItem({ ...newItem, category_id: e.target.value })}
+                className="w-full p-3 border rounded-lg mb-3 text-black"
+              >
+                <option value="">Select Category (Optional)</option>
+                {categories.map((cat) => (
+                  <option key={cat.category_id} value={cat.category_id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex gap-3">
                 <button
-                  onClick={() => handleEditItem(item)}
-                  className="text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-600 rounded"
+                  type="submit"
+                  className="bg-orange-600 text-black px-6 py-2 rounded-lg hover:bg-orange-700"
                 >
-                  Edit
+                  {editingItem ? "Update Item" : "Add Item"}
                 </button>
                 <button
-                  onClick={() => handleDeleteItem(item.menu_item_id)}
-                  className="text-red-600 hover:text-red-800 px-3 py-1 border border-red-600 rounded"
+                  type="button"
+                  onClick={() => {
+                    setShowItemForm(false);
+                    setEditingItem(null);
+                    setImagePreview(null);
+                  }}
+                  className="bg-gray-900 text-orange-500 px-6 py-2 rounded-lg hover:bg-gray-800"
                 >
-                  Delete
+                  Cancel
                 </button>
               </div>
-            </div>
-          ))}
+            </form>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {menuItems.map((item) => (
+              <div key={item.menu_item_id} className="border rounded-lg p-4 hover:shadow-lg transition bg-white">
+                {item.image_url ? (
+                  <img
+                    src={getImageUrl(item.image_url)}
+                    alt={item.name}
+                    className="w-full h-48 object-cover rounded-lg mb-4"
+
+                  />
+                ) : (
+                  <div className="w-full h-48 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                    <span className="text-gray-500">No image</span>
+                  </div>
+                )}
+                <h4 className="font-bold text-lg mb-2 text-black">{item.name}</h4>
+                <p className="text-gray-900 text-sm mb-2">{item.category_name}</p>
+                <p className="text-orange-600 font-bold text-xl mb-4">
+                  {parseFloat(item.price).toFixed(2)} EGP
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEditItem(item)}
+                    className="flex-1 bg-orange-600 text-black px-4 py-2 rounded hover:bg-orange-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteItem(item.menu_item_id)}
+                    className="flex-1 bg-gray-900 text-orange-500 px-4 py-2 rounded hover:bg-gray-800"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
