@@ -9,12 +9,12 @@ router.post('/image', protect, restrictTo('restaurant_owner', 'admin'), upload.s
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
 
-  const fileUrl = `/uploads/${req.body.type || 'general'}/${req.file.filename}`;
-
+  // Cloudinary returns the uploaded file info in req.file
   res.json({
     success: true,
-    url: fileUrl,
-    filename: req.file.filename
+    url: req.file.path, // Cloudinary URL
+    filename: req.file.filename,
+    cloudinary_id: req.file.filename // Cloudinary public_id for deletion
   });
 });
 
@@ -24,11 +24,15 @@ router.post('/images', protect, restrictTo('restaurant_owner', 'admin'), upload.
     return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
-  const urls = req.files.map(file => `/uploads/${req.body.type || 'general'}/${file.filename}`);
+  const uploadedFiles = req.files.map(file => ({
+    url: file.path, // Cloudinary URL
+    filename: file.filename,
+    cloudinary_id: file.filename
+  }));
 
   res.json({
     success: true,
-    urls,
+    files: uploadedFiles,
     count: req.files.length
   });
 });

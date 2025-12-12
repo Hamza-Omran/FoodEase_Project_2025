@@ -117,7 +117,7 @@ export default function Login() {
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
+            {/* <div className="flex items-center">
               <input
                 id="remember-me"
                 name="remember-me"
@@ -130,17 +130,17 @@ export default function Login() {
               >
                 Remember me
               </label>
-            </div>
+            </div> */}
 
-            <div className="text-sm">
+            {/* <div className="text-sm">
               <a
                 href="#"
                 className="font-medium text-orange-600 hover:text-orange-500"
               >
                 Forgot password?
               </a>
-            </div>
-          </div>
+            </div>*/}
+          </div> 
 
           <div>
             <button

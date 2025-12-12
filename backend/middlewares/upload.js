@@ -1,19 +1,24 @@
 const multer = require('multer');
-const path = require('path');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary');
 const AppError = require('../utils/AppError');
 
-// Configure storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+// Configure Cloudinary Storage for Multer
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'FoodEase-Project', // Your collection name
+        allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+        transformation: [{ width: 1000, height: 1000, crop: 'limit' }], // Auto-resize large images
+        public_id: (req, file) => {
+            // Generate unique filename
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            return `${file.fieldname}-${uniqueSuffix}`;
+        }
     }
 });
 
-// File filter
+// File filter - only allow images
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
         cb(null, true);
@@ -22,7 +27,8 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const upload = multer({
+// Create multer instance with Cloudinary storage
+const uploadMiddleware = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
@@ -30,38 +36,7 @@ const upload = multer({
     }
 });
 
-// Export a middleware that handles single file upload with field name 'image'
-// But the route uses upload.single, which suggests upload is the multer instance or a wrapper.
-// In route: upload.single
-// So I should export an object with single method, or just the multer instance.
-// The route calls `upload.single`. Multer instance has `.single()`.
-// But wait, `upload.single` in route usage: `upload.single` (as a property access? or function call?)
-// Route: `router.post('/image', ..., upload.single, ...)`
-// Usually it's `upload.single('image')`.
-// Let's check the route again.
-
-// Route line 7: `router.post('/image', ..., upload.single, ...)`
-// If `upload` is the multer instance, `upload.single` is a function that returns middleware.
-// It should be called like `upload.single('image')`.
-// If the route passes `upload.single` directly, it might be wrong unless `upload.single` is a pre-configured middleware.
-
-// Let's assume I should export an object with a `single` property that IS the middleware.
-// OR, I should fix the route to call `.single('image')`.
-
-// Let's check the route usage again.
-// `upload.single` is passed as a handler.
-// If `upload` is `{ single: multerInstance.single('image') }`, then it works.
-
-// However, usually one exports the multer instance.
-// Let's look at how I should implement it.
-// I'll create a wrapper.
-
-const uploadMiddleware = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: { fileSize: 1024 * 1024 * 5 }
-});
-
+// Export pre-configured middleware
 module.exports = {
     single: uploadMiddleware.single('image'),
     array: uploadMiddleware.array('images', 5),
