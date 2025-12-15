@@ -8,42 +8,42 @@ const bcrypt = require('bcrypt');
 
 exports.getSystemOverview = async (req, res, next) => {
   try {
-    const { rows: temprestaurantCount } = await pool.query('SELECT COUNT(*) as count FROM Restaurants');
-    const { rows: tempcustomerCount } = await pool.query('SELECT COUNT(*) as count FROM Customers');
-    const { rows: temporderCount } = await pool.query('SELECT COUNT(*) as count FROM Orders');
-    const { rows: tempdriverCount } = await pool.query('SELECT COUNT(*) as count FROM Drivers');
+    const { rows: restaurantCount } = await pool.query('SELECT COUNT(*) as count FROM Restaurants');
+    const { rows: customerCount } = await pool.query('SELECT COUNT(*) as count FROM Customers');
+    const { rows: orderCount } = await pool.query('SELECT COUNT(*) as count FROM Orders');
+    const { rows: driverCount } = await pool.query('SELECT COUNT(*) as count FROM Drivers');
 
-    const { rows: temprevenueStats } = await pool.query(`
+    const { rows: revenueStats } = await pool.query(`
       SELECT 
         SUM(total_amount) as total_revenue,
         AVG(total_amount) as avg_order_value,
         COUNT(*) as order_count
       FROM Orders
-      WHERE order_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      WHERE order_date >= NOW() - INTERVAL '30 days'
         AND status = 'delivered'
     `);
 
     const { rows: dailySales } = await pool.query(`
       SELECT * FROM vw_daily_sales
-      WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+      WHERE order_date >= CURRENT_DATE - INTERVAL '7 days'
       ORDER BY order_date DESC
     `);
 
     const { rows: statusBreakdown } = await pool.query(`
       SELECT status, COUNT(*) as count
       FROM Orders
-      WHERE order_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      WHERE order_date >= NOW() - INTERVAL '30 days'
       GROUP BY status
     `);
 
     res.json({
       counts: {
-        restaurants: restaurantCount.count,
-        customers: customerCount.count,
-        orders: orderCount.count,
-        drivers: driverCount.count
+        restaurants: restaurantCount[0].count,
+        customers: customerCount[0].count,
+        orders: orderCount[0].count,
+        drivers: driverCount[0].count
       },
-      revenue: revenueStats,
+      revenue: revenueStats[0],
       dailySales,
       statusBreakdown
     });
@@ -89,7 +89,7 @@ exports.getRestaurant = async (req, res, next) => {
         u.phone as owner_phone
       FROM Restaurants r
       LEFT JOIN Users u ON r.owner_id = u.user_id
-      WHERE r.restaurant_id = 
+      WHERE r.restaurant_id = $1
     `, [id]);
 
     if (!restaurants[0]) {
@@ -130,10 +130,11 @@ exports.createRestaurant = async (req, res, next) => {
 
     const { rows: userResult } = await pool.query(`
       INSERT INTO Users (email, password_hash, role, phone, full_name, is_active)
-      VALUES (, ?, 'restaurant_owner', , ?, 1)
+      VALUES ($1, $2, 'restaurant_owner', $3, $4, TRUE)
+      RETURNING user_id
     `, [owner_email, hashedPassword, owner_phone, owner_name]);
 
-    const ownerId = userResult.insertId;
+    const ownerId = userResult[0].user_id;
 
     // Create restaurant
     const { rows: restaurantResult } = await pool.query(`
@@ -142,7 +143,8 @@ exports.createRestaurant = async (req, res, next) => {
         street_address, city,
         status, delivery_fee, minimum_order, estimated_delivery_time,
         cuisine_type, is_featured
-      ) VALUES (, ?, ?, ?, ?, ?, ?, 'active', , ?, 30, ?, 0)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, 30, $10, FALSE)
+      RETURNING restaurant_id
     `, [
       ownerId, name, description, phone, email,
       street_address, city,
@@ -151,7 +153,7 @@ exports.createRestaurant = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      restaurant_id: restaurantResult.insertId,
+      restaurant_id: restaurantResult[0].restaurant_id,
       owner_id: ownerId
     });
   } catch (err) {
@@ -168,6 +170,7 @@ exports.updateRestaurant = async (req, res, next) => {
     // Build dynamic UPDATE query
     const fields = [];
     const values = [];
+    let paramIndex = 1;
 
     const allowedFields = [
       'name', 'description', 'phone', 'email',
@@ -178,8 +181,9 @@ exports.updateRestaurant = async (req, res, next) => {
 
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
-        fields.push(`${field} = `);
+        fields.push(`${field} = $${paramIndex}`);
         values.push(updates[field]);
+        paramIndex++;
       }
     }
 
@@ -190,7 +194,7 @@ exports.updateRestaurant = async (req, res, next) => {
     values.push(id);
 
     await pool.query(
-      `UPDATE Restaurants SET ${fields.join(`, ')} WHERE restaurant_id = `,
+      `UPDATE Restaurants SET ${fields.join(', ')} WHERE restaurant_id = $${paramIndex}`,
       values
     );
 
@@ -207,7 +211,7 @@ exports.deleteRestaurant = async (req, res, next) => {
 
     // Get owner_id first
     const { rows: restaurants } = await pool.query(
-      'SELECT owner_id FROM Restaurants WHERE restaurant_id = ',
+      'SELECT owner_id FROM Restaurants WHERE restaurant_id = $1',
       [id]
     );
 
@@ -218,10 +222,10 @@ exports.deleteRestaurant = async (req, res, next) => {
     const ownerId = restaurants[0].owner_id;
 
     // Delete restaurant (cascades to menu items, orders, etc.)
-    await pool.query('DELETE FROM Restaurants WHERE restaurant_id = ', [id]);
+    await pool.query('DELETE FROM Restaurants WHERE restaurant_id = $1', [id]);
 
     // Delete owner user
-    await pool.query('DELETE FROM Users WHERE user_id = ', [ownerId]);
+    await pool.query('DELETE FROM Users WHERE user_id = $1', [ownerId]);
 
     res.json({ success: true, message: 'Restaurant and owner deleted' });
   } catch (err) {
@@ -268,7 +272,7 @@ exports.getDriver = async (req, res, next) => {
         u.is_active
       FROM Drivers d
       JOIN Users u ON d.user_id = u.user_id
-      WHERE d.driver_id = 
+      WHERE d.driver_id = $1
     `, [id]);
 
     if (!drivers[0]) {
@@ -295,29 +299,29 @@ exports.createDriver = async (req, res, next) => {
       license_number
     } = req.body;
 
-
-
     // Create user first
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const { rows: userResult } = await pool.query(`
       INSERT INTO Users (email, password_hash, role, phone, full_name, is_active)
-      VALUES (, ?, 'driver', , ?, 1)
+      VALUES ($1, $2, 'driver', $3, $4, TRUE)
+      RETURNING user_id
     `, [email, hashedPassword, phone, full_name]);
 
-    const userId = userResult.insertId;
+    const userId = userResult[0].user_id;
 
     // Create driver
     const { rows: driverResult } = await pool.query(`
       INSERT INTO Drivers (
         user_id, vehicle_type, vehicle_model, license_plate,
         license_number, is_available
-      ) VALUES (, ?, ?, ?, ?, 1)
+      ) VALUES ($1, $2, $3, $4, $5, TRUE)
+      RETURNING driver_id
     `, [userId, vehicle_type, vehicle_model, license_plate, license_number]);
 
     res.status(201).json({
       success: true,
-      driver_id: driverResult.insertId,
+      driver_id: driverResult[0].driver_id,
       user_id: userId
     });
   } catch (err) {
@@ -333,6 +337,7 @@ exports.updateDriver = async (req, res, next) => {
 
     const fields = [];
     const values = [];
+    let paramIndex = 1;
 
     const allowedFields = [
       'vehicle_type', 'vehicle_model', 'license_plate',
@@ -341,8 +346,9 @@ exports.updateDriver = async (req, res, next) => {
 
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
-        fields.push(`${field} = `);
+        fields.push(`${field} = $${paramIndex}`);
         values.push(updates[field]);
+        paramIndex++;
       }
     }
 
@@ -353,7 +359,7 @@ exports.updateDriver = async (req, res, next) => {
     values.push(id);
 
     await pool.query(
-      `UPDATE Drivers SET ${fields.join(`, ')} WHERE driver_id = `,
+      `UPDATE Drivers SET ${fields.join(', ')} WHERE driver_id = $${paramIndex}`,
       values
     );
 
@@ -370,7 +376,7 @@ exports.deleteDriver = async (req, res, next) => {
 
     // Get user_id first
     const { rows: drivers } = await pool.query(
-      'SELECT user_id FROM Drivers WHERE driver_id = ',
+      'SELECT user_id FROM Drivers WHERE driver_id = $1',
       [id]
     );
 
@@ -381,10 +387,10 @@ exports.deleteDriver = async (req, res, next) => {
     const userId = drivers[0].user_id;
 
     // Delete driver
-    await pool.query('DELETE FROM Drivers WHERE driver_id = ', [id]);
+    await pool.query('DELETE FROM Drivers WHERE driver_id = $1', [id]);
 
     // Delete user
-    await pool.query('DELETE FROM Users WHERE user_id = ', [userId]);
+    await pool.query('DELETE FROM Users WHERE user_id = $1', [userId]);
 
     res.json({ success: true, message: 'Driver and user deleted' });
   } catch (err) {
