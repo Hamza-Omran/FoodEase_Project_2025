@@ -4,8 +4,8 @@ module.exports = {
   findByUserId: async (userId) => {
 
 
-    const [rows] = await pool.query(
-      'SELECT * FROM Customers WHERE user_id = ?',
+    const { rows } = await pool.query(
+      'SELECT * FROM Customers WHERE user_id = $1',
       [userId]
     );
 
@@ -21,8 +21,8 @@ module.exports = {
   getAddresses: async (customerId) => {
 
 
-    const [rows] = await pool.query(
-      'SELECT * FROM Customer_Addresses WHERE customer_id = ? ORDER BY is_default DESC, address_id DESC',
+    const { rows } = await pool.query(
+      'SELECT * FROM Customer_Addresses WHERE customer_id = $1 ORDER BY is_default DESC, address_id DESC',
       [customerId]
     );
 
@@ -31,9 +31,9 @@ module.exports = {
   },
 
   update: async (customerId, data) => {
-    const fields = Object.keys(data).map(k => `${k} = ?`).join(', ');
+    const fields = Object.keys(data).map((k, i) => `${k} = $${i + 1}`).join(', ');
     const values = [...Object.values(data), customerId];
-    await pool.query(`UPDATE Customers SET ${fields} WHERE customer_id = ?`, values);
+    await pool.query(`UPDATE Customers SET ${fields} WHERE customer_id = $${values.length}`, values);
     return { customer_id: customerId, ...data };
   },
 
@@ -47,20 +47,21 @@ module.exports = {
       // If setting as default, unset other defaults
       if (is_default) {
         await connection.query(
-          'UPDATE Customer_Addresses SET is_default = FALSE WHERE customer_id = ?',
+          'UPDATE Customer_Addresses SET is_default = FALSE WHERE customer_id = $1',
           [customerId]
         );
       }
 
-      const [result] = await connection.query(
+      const { rows: result } = await connection.query(
         `INSERT INTO Customer_Addresses 
          (customer_id, address_label, street_address, city, is_default) 
-         VALUES (?, ?, ?, ?, ?)`,
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING address_id`,
         [customerId, address_label, street_address, city, is_default || false]
       );
 
       await connection.commit();
-      return { address_id: result.insertId, ...addressData };
+      return { address_id: result[0].address_id, ...addressData };
     } catch (error) {
       await connection.rollback();
       throw error;
@@ -79,15 +80,15 @@ module.exports = {
       // If setting as default, unset other defaults
       if (is_default) {
         await connection.query(
-          'UPDATE Customer_Addresses SET is_default = FALSE WHERE customer_id = ? AND address_id != ?',
+          'UPDATE Customer_Addresses SET is_default = FALSE WHERE customer_id = $1 AND address_id != $2',
           [customerId, addressId]
         );
       }
 
       await connection.query(
         `UPDATE Customer_Addresses 
-         SET address_label = ?, street_address = ?, city = ?, is_default = ?
-         WHERE address_id = ? AND customer_id = ?`,
+         SET address_label = $1, street_address = $2, city = $3, is_default = $4
+         WHERE address_id = $5 AND customer_id = $6`,
         [address_label, street_address, city, is_default || false, addressId, customerId]
       );
 
@@ -103,7 +104,7 @@ module.exports = {
 
   deleteAddress: async (customerId, addressId) => {
     await pool.query(
-      'DELETE FROM Customer_Addresses WHERE address_id = ? AND customer_id = ?',
+      'DELETE FROM Customer_Addresses WHERE address_id = $1 AND customer_id = $2',
       [addressId, customerId]
     );
   }
