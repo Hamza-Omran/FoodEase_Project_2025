@@ -1,6 +1,8 @@
 const { Pool } = require('pg');
 const env = require('./env');
 
+console.log(`DB Config: Host=${env.DB_HOST} Port=${env.DB_PORT} User=${env.DB_USER} DB=${env.DB_NAME} SSL=${env.NODE_ENV === 'production'}`);
+
 const pool = new Pool({
     host: env.DB_HOST,
     port: env.DB_PORT || 5432,
