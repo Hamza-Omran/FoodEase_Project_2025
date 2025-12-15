@@ -3,7 +3,9 @@ const pool = require('../config/db');
 class OrderRepository {
     async placeOrder(customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode) {
         // 1. Call stored procedure to place order
-        await pool.query(`SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)', [customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode]
+        await pool.query(
+            'SELECT * FROM sp_place_order($1::INT, $2::INT, $3::INT, $4::TEXT, $5::payment_status, $6::TEXT)',
+            [customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode]
         );
 
         // 2. Get the created order (latest for customer)
@@ -17,7 +19,7 @@ class OrderRepository {
        FROM Orders o
        JOIN Restaurants r ON o.restaurant_id = r.restaurant_id
        JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
-       WHERE o.customer_id = ? 
+       WHERE o.customer_id = $1 
        ORDER BY o.order_date DESC 
        LIMIT 1`,
             [customerId]
@@ -58,17 +60,6 @@ class OrderRepository {
 
     async getForTracking(idOrNumber) {
         // Try to find by ID first, then number
-        let query = 'SELECT order_id FROM Orders WHERE order_id = ?';
-        let params = [idOrNumber];
-
-        // If it looks like a UUID or long string, assume it might be order_number (though order_number is usually UUID)
-        // But here idOrNumber is likely the ID from the route /orders/:id/track
-        // If the route param is orderId, it's the int ID.
-
-        // Using sp_get_order_tracking requires ID.
-        // Let's first get the ID if it's a number string, or resolve it.
-
-        // Actually, let's just query the view/tables directly to be flexible
         const { rows: orders } = await pool.query(`
       SELECT 
         o.*,
@@ -87,7 +78,7 @@ class OrderRepository {
       LEFT JOIN Delivery_Assignments da ON o.order_id = da.order_id
       LEFT JOIN Drivers d ON da.driver_id = d.driver_id
       LEFT JOIN Users u ON d.user_id = u.user_id
-      WHERE o.order_id = ? OR o.order_number = ?
+      WHERE o.order_id::TEXT = $1 OR o.order_number = $2
     `, [idOrNumber, idOrNumber]);
 
         if (!orders.length) return null;
@@ -108,12 +99,10 @@ class OrderRepository {
     }
 
     async updateStatus(orderId, status, userId, cancellationReason) {
-        await pool.query(`SELECT * FROM sp_update_order_status($1, $2, $3, $4)', [
-            orderId,
-            status,
-            userId,
-            cancellationReason
-        ]);
+        await pool.query(
+            'SELECT * FROM sp_update_order_status($1, $2, $3, $4)',
+            [orderId, status, userId, cancellationReason]
+        );
 
         // Return updated order
         const { rows: orders } = await pool.query('SELECT * FROM Orders WHERE order_id = $1', [orderId]);

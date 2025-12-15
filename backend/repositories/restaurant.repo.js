@@ -3,7 +3,7 @@ const pool = require('../config/db');
 module.exports = {
   list: async () => {
     const { rows: rows } = await pool.query(
-      'SELECT * FROM Restaurants WHERE status = "active" ORDER BY is_featured DESC, name ASC'
+      'SELECT * FROM Restaurants WHERE status = \'active\' ORDER BY is_featured DESC, name ASC'
     );
     return rows;
   },
@@ -18,15 +18,16 @@ module.exports = {
     const { owner_id, name, description, street_address, city, phone, cuisine_type } = data;
 
     const { rows: result } = await pool.query(`INSERT INTO Restaurants(owner_id, name, street_address, city, description, phone, cuisine_type)
-VALUES($1, $2, $3, $4, $5, $6, $7)`, [owner_id, name, street_address, city, description, phone, cuisine_type]
+VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING restaurant_id`, [owner_id, name, street_address, city, description, phone, cuisine_type]
     );
-    return { restaurant_id: result.rows[0].id, ...data };
+    return { restaurant_id: result[0].restaurant_id, ...data };
   },
 
   update: async (id, data) => {
-    const fields = Object.keys(data).map(k => `${k} = ?`).join(', ');
+    const fields = Object.keys(data).map((k, i) => `${k} = $${i + 1}`).join(', ');
     const values = [...Object.values(data), id];
-    await pool.query(`UPDATE Restaurants SET ${fields} WHERE restaurant_id = ? `, values);
+    // Dynamic update with positional arguments
+    await pool.query(`UPDATE Restaurants SET ${fields} WHERE restaurant_id = $${values.length} `, values);
     return { restaurant_id: id, ...data };
   },
 
