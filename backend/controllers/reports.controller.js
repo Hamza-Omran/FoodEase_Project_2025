@@ -5,11 +5,12 @@ exports.getDailySales = async (req, res, next) => {
   try {
     const { restaurant_id, days = 30 } = req.query;
 
-    let query = 'SELECT * FROM vw_daily_sales WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL  DAY)';
+    let query = 'SELECT * FROM vw_daily_sales WHERE order_date >= CURRENT_DATE - ($1 * INTERVAL \'1 day\')';
     const params = [parseInt(days)];
+    let paramIndex = 2;
 
     if (restaurant_id) {
-      query += ' AND restaurant_id = ';
+      query += ` AND restaurant_id = $${paramIndex++}`;
       params.push(restaurant_id);
     }
 
@@ -49,9 +50,10 @@ exports.getPopularItems = async (req, res, next) => {
 
     let query = 'SELECT * FROM vw_popular_menu_items';
     const params = [];
+    let paramIndex = 1;
 
     if (restaurant_id) {
-      query += ' WHERE restaurant_id = ';
+      query += ` WHERE restaurant_id = $${paramIndex++}`;
       params.push(restaurant_id);
     }
 
@@ -80,7 +82,7 @@ exports.getCustomerAnalytics = async (req, res, next) => {
       FROM Customers c
       JOIN Users u ON c.user_id = u.user_id
       LEFT JOIN Orders o ON c.customer_id = o.customer_id
-      GROUP BY c.customer_id
+      GROUP BY c.customer_id, u.full_name, u.email, c.total_orders, c.total_spent, c.loyalty_points
       ORDER BY c.total_spent DESC
       LIMIT 100
     `);
@@ -113,26 +115,27 @@ exports.exportSalesData = async (req, res, next) => {
       WHERE 1=1
     `;
     const params = [];
+    let paramIndex = 1;
 
     if (start_date) {
-      query += ' AND o.order_date >= ';
+      query += ` AND o.order_date >= $${paramIndex++}`;
       params.push(start_date);
     }
 
     if (end_date) {
-      query += ' AND o.order_date <= ';
+      query += ` AND o.order_date <= $${paramIndex++}`;
       params.push(end_date);
     }
 
     if (restaurant_id) {
-      query += ' AND o.restaurant_id = ';
+      query += ` AND o.restaurant_id = $${paramIndex++}`;
       params.push(restaurant_id);
     }
 
     query += ' ORDER BY o.order_date DESC';
 
     const { rows: data } = await pool.query(query, params);
-    
+
     // Convert to CSV
     if (data.length === 0) {
       return res.json({ success: false, message: 'No data found' });

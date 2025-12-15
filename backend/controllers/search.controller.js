@@ -3,10 +3,10 @@ const pool = require('../config/db');
 // Search restaurants
 exports.searchRestaurants = async (req, res, next) => {
   try {
-    const { 
-      query, 
-      city, 
-      cuisine_type, 
+    const {
+      query,
+      city,
+      cuisine_type,
       min_rating,
       is_featured,
       sort_by = 'rating',
@@ -15,27 +15,32 @@ exports.searchRestaurants = async (req, res, next) => {
       offset = 0
     } = req.query;
 
-    let sql = 'SELECT * FROM Restaurants WHERE status = "active"';
+    let sql = 'SELECT * FROM Restaurants WHERE status = \'active\'';
     const params = [];
+    let paramIndex = 1;
 
     if (query) {
-      sql += ' AND (name LIKE  OR description LIKE ? OR cuisine_type LIKE ?)';
+      sql += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR cuisine_type ILIKE $${paramIndex})`;
       const searchTerm = `%${query}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
+      params.push(searchTerm); // Postgre re-uses $1? No, usually $1, $2. But here I used $paramIndex 3 times?
+      // Postgres supports referring to same parameter multiple times as $1.
+      // So I push ONCE and increment ONCE?
+      // NO. If I use $1 three times, I push 1 param.
+      paramIndex++;
     }
 
     if (city) {
-      sql += ' AND city = ';
+      sql += ` AND city = $${paramIndex++}`;
       params.push(city);
     }
 
     if (cuisine_type) {
-      sql += ' AND cuisine_type = ';
+      sql += ` AND cuisine_type = $${paramIndex++}`;
       params.push(cuisine_type);
     }
 
     if (min_rating) {
-      sql += ' AND rating >= ';
+      sql += ` AND rating >= $${paramIndex++}`;
       params.push(parseFloat(min_rating));
     }
 
@@ -46,40 +51,43 @@ exports.searchRestaurants = async (req, res, next) => {
     // Sort
     const allowedSorts = ['rating', 'created_at', 'name', 'delivery_fee'];
     if (allowedSorts.includes(sort_by)) {
-      sql += ` ORDER BY ${sort_by} ${order === 'ASC'  'ASC' : 'DESC'}`;
+      sql += ` ORDER BY ${sort_by} ${order === 'ASC' ? 'ASC' : 'DESC'}`;
     }
 
-    sql += ' LIMIT  OFFSET ?';
+    sql += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(parseInt(limit), parseInt(offset));
 
     const { rows: restaurants } = await pool.query(sql, params);
 
     // Get total count
-    let countSql = 'SELECT COUNT(*) as total FROM Restaurants WHERE status = "active"';
+    let countSql = 'SELECT COUNT(*) as total FROM Restaurants WHERE status = \'active\'';
     const countParams = [];
+    let countParamIndex = 1;
 
     if (query) {
-      countSql += ' AND (name LIKE  OR description LIKE ? OR cuisine_type LIKE ?)';
+      countSql += ` AND (name ILIKE $${countParamIndex} OR description ILIKE $${countParamIndex} OR cuisine_type ILIKE $${countParamIndex})`;
       const searchTerm = `%${query}%`;
-      countParams.push(searchTerm, searchTerm, searchTerm);
+      countParams.push(searchTerm);
+      countParamIndex++;
     }
 
     if (city) {
-      countSql += ' AND city = ';
+      countSql += ` AND city = $${countParamIndex++}`;
       countParams.push(city);
     }
 
     if (cuisine_type) {
-      countSql += ' AND cuisine_type = ';
+      countSql += ` AND cuisine_type = $${countParamIndex++}`;
       countParams.push(cuisine_type);
     }
 
     if (min_rating) {
-      countSql += ' AND rating >= ';
+      countSql += ` AND rating >= $${countParamIndex++}`;
       countParams.push(parseFloat(min_rating));
     }
 
-    const [[{ total }]] = await pool.query(countSql, countParams);
+    const { rows: countResult } = await pool.query(countSql, countParams);
+    const total = parseInt(countResult[0].total);
 
     res.json({
       restaurants,
@@ -122,20 +130,22 @@ exports.searchMenuItems = async (req, res, next) => {
       WHERE mi.is_available = TRUE
     `;
     const params = [];
+    let paramIndex = 1;
 
     if (query) {
-      sql += ' AND (mi.name LIKE  OR mi.description LIKE ?)';
+      sql += ` AND (mi.name ILIKE $${paramIndex} OR mi.description ILIKE $${paramIndex})`;
       const searchTerm = `%${query}%`;
-      params.push(searchTerm, searchTerm);
+      params.push(searchTerm);
+      paramIndex++;
     }
 
     if (restaurant_id) {
-      sql += ' AND mi.restaurant_id = ';
+      sql += ` AND mi.restaurant_id = $${paramIndex++}`;
       params.push(restaurant_id);
     }
 
     if (category_id) {
-      sql += ' AND mi.category_id = ';
+      sql += ` AND mi.category_id = $${paramIndex++}`;
       params.push(category_id);
     }
 
@@ -152,16 +162,16 @@ exports.searchMenuItems = async (req, res, next) => {
     }
 
     if (min_price) {
-      sql += ' AND mi.price >= ';
+      sql += ` AND mi.price >= $${paramIndex++}`;
       params.push(parseFloat(min_price));
     }
 
     if (max_price) {
-      sql += ' AND mi.price <= ';
+      sql += ` AND mi.price <= $${paramIndex++}`;
       params.push(parseFloat(max_price));
     }
 
-    sql += ' ORDER BY mi.total_orders DESC LIMIT  OFFSET ?';
+    sql += ` ORDER BY mi.total_orders DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(parseInt(limit), parseInt(offset));
 
     const { rows: items } = await pool.query(sql, params);
@@ -192,13 +202,15 @@ exports.getFilterOptions = async (req, res, next) => {
     `);
 
     // Get price range
-    const { rows: temppriceRange } = await pool.query(`
+    const { rows: priceResult } = await pool.query(`
       SELECT 
         MIN(price) as min_price,
         MAX(price) as max_price
       FROM Menu_Items
       WHERE is_available = TRUE
     `);
+
+    const priceRange = priceResult[0] || { min_price: 0, max_price: 0 };
 
     res.json({
       cities: cities.map(c => c.city),
