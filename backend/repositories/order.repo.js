@@ -3,7 +3,7 @@ const pool = require('../config/db');
 class OrderRepository {
     async placeOrder(customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode) {
         // 1. Call stored procedure to place order
-        await pool.query(`SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)`, [customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode]
+        await pool.query(`SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)', [customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode]
         );
 
         // 2. Get the created order (latest for customer)
@@ -108,7 +108,7 @@ class OrderRepository {
     }
 
     async updateStatus(orderId, status, userId, cancellationReason) {
-        await pool.query(`SELECT * FROM sp_update_order_status($1, $2, $3, $4)`, [
+        await pool.query(`SELECT * FROM sp_update_order_status($1, $2, $3, $4)', [
             orderId,
             status,
             userId,

@@ -11,7 +11,7 @@ exports.createOrder = async (req, res, next) => {
     const { restaurant_id, address_id, special_instructions, payment_method, coupon_code } = req.body;
 
     // Call stored procedure
-    await pool.query(`SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)`, [customerId, restaurant_id, address_id, special_instructions, payment_method, coupon_code]
+    await pool.query(`SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)', [customerId, restaurant_id, address_id, special_instructions, payment_method, coupon_code]
     );
 
     // Get the latest order
@@ -115,7 +115,7 @@ exports.updateOrderStatus = async (req, res, next) => {
     }
 
     // Call stored procedure
-    await pool.query(`SELECT * FROM sp_update_order_status($1, $2, $3, $4)`, [
+    await pool.query(`SELECT * FROM sp_update_order_status($1, $2, $3, $4)', [
       id,
       status,
       req.user.id,
