@@ -13,7 +13,7 @@ router.get('/', orderController.getMyOrders);
 router.get('/:id', orderController.getOrder);
 
 // Create order
-router.post('/', orderController.createOrder);
+router.post('/', orderController.placeOrder);
 
 // Update order status
 router.put('/status/:id', restrictTo('restaurant_owner', 'admin'), orderController.updateStatus);

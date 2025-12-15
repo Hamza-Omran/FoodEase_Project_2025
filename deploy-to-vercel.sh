@@ -34,7 +34,7 @@ read -p "Push to GitHub and trigger Vercel deployment? (y/n): " push_confirm
 if [ "$push_confirm" = "y" ] || [ "$push_confirm" = "Y" ]; then
     echo ""
     echo "📤 Pushing to GitHub..."
-    git push main:v2
+    git push -u origin main
     
     echo ""
     echo "✅ Code pushed! Vercel will auto-deploy."

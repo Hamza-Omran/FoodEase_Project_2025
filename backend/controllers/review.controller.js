@@ -273,7 +273,7 @@ exports.updateReview = async (req, res, next) => {
        WHERE review_id = $3 AND customer_id = $4`, [rating, review_text, reviewId, customer_id]
         );
 
-        if (result.affectedRows === 0) {
+        if (result.rowCount === 0) {
             return next(new AppError('Review not found or you do not have permission to update it', 404));
         }
 
@@ -310,7 +310,7 @@ exports.deleteReview = async (req, res, next) => {
         const { rows: result } = await pool.query(`DELETE FROM ${table} WHERE review_id = $1 AND customer_id = $2`, [reviewId, customer_id]
         );
 
-        if (result.affectedRows === 0) {
+        if (result.rowCount === 0) {
             return next(new AppError('Review not found or you do not have permission to delete it', 404));
         }
 

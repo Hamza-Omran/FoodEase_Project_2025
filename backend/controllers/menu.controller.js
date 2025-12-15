@@ -301,7 +301,7 @@ exports.deleteMenuItem = async (req, res, next) => {
     const { rows: result } = await pool.query('DELETE FROM Menu_Items WHERE menu_item_id = $1 AND restaurant_id = $2', [itemId, restaurantId]
     );
 
-    if (result.affectedRows === 0) {
+    if (result.rowCount === 0) {
       return next(new AppError('Menu item not found', 404));
     }
 
