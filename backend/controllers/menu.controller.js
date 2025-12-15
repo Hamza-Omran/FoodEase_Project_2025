@@ -6,13 +6,13 @@ exports.getMenuItems = async (req, res, next) => {
   try {
     const { restaurantId } = req.params;
 
-    const [items] = await pool.query(`
+    const { rows: items } = await pool.query(`
       SELECT 
         mi.*,
         mc.name as category_name
       FROM Menu_Items mi
       LEFT JOIN Menu_Categories mc ON mi.category_id = mc.category_id
-      WHERE mi.restaurant_id = ?
+      WHERE mi.restaurant_id = $1
       ORDER BY mc.category_id, mi.name
     `, [restaurantId]);
 
@@ -27,9 +27,7 @@ exports.getCategories = async (req, res, next) => {
   try {
     const { restaurantId } = req.params;
 
-    const [categories] = await pool.query(
-      'SELECT * FROM Menu_Categories WHERE restaurant_id = ? ORDER BY category_id',
-      [restaurantId]
+    const { rows: categories } = await pool.query('SELECT * FROM Menu_Categories WHERE restaurant_id = $1 ORDER BY category_id', [restaurantId]
     );
 
     res.json(categories);
@@ -45,9 +43,7 @@ exports.createCategory = async (req, res, next) => {
     const { name, description } = req.body;
 
     // Verify restaurant ownership
-    const [restaurants] = await pool.query(
-      'SELECT owner_id FROM Restaurants WHERE restaurant_id = ?',
-      [restaurantId]
+    const { rows: restaurants } = await pool.query('SELECT owner_id FROM Restaurants WHERE restaurant_id = $1', [restaurantId]
     );
 
     if (!restaurants[0]) {
@@ -58,13 +54,11 @@ exports.createCategory = async (req, res, next) => {
       return next(new AppError('Not authorized', 403));
     }
 
-    const [result] = await pool.query(
-      'INSERT INTO Menu_Categories (restaurant_id, name, description) VALUES (?, ?, ?)',
-      [restaurantId, name, description || null]
+    const { rows: result } = await pool.query('INSERT INTO Menu_Categories (restaurant_id, name, description) VALUES ($1, $2, $3)', [restaurantId, name, description || null]
     );
 
     res.status(201).json({
-      category_id: result.insertId,
+      category_id: result.rows[0].id,
       restaurant_id: restaurantId,
       name,
       description
@@ -81,11 +75,11 @@ exports.updateCategory = async (req, res, next) => {
     const { name, description } = req.body;
 
     // Verify ownership
-    const [categories] = await pool.query(`
+    const { rows: categories } = await pool.query(`
       SELECT mc.*, r.owner_id
       FROM Menu_Categories mc
       JOIN Restaurants r ON mc.restaurant_id = r.restaurant_id
-      WHERE mc.category_id = ?
+      WHERE mc.category_id = $1
     `, [categoryId]);
 
     if (!categories[0]) {
@@ -132,11 +126,11 @@ exports.deleteCategory = async (req, res, next) => {
     const { categoryId } = req.params;
 
     // Verify ownership
-    const [categories] = await pool.query(`
+    const { rows: categories } = await pool.query(`
       SELECT mc.*, r.owner_id
       FROM Menu_Categories mc
       JOIN Restaurants r ON mc.restaurant_id = r.restaurant_id
-      WHERE mc.category_id = ?
+      WHERE mc.category_id = $1
     `, [categoryId]);
 
     if (!categories[0]) {
@@ -148,16 +142,14 @@ exports.deleteCategory = async (req, res, next) => {
     }
 
     // Check if category has items
-    const [[{ count }]] = await pool.query(
-      'SELECT COUNT(*) as count FROM Menu_Items WHERE category_id = ?',
-      [categoryId]
+    const [[{ count }]] = await pool.query('SELECT COUNT(*) as count FROM Menu_Items WHERE category_id = $1', [categoryId]
     );
 
     if (count > 0) {
       return next(new AppError('Cannot delete category with items. Move items to another category first.', 400));
     }
 
-    await pool.query('DELETE FROM Menu_Categories WHERE category_id = ?', [categoryId]);
+    await pool.query('DELETE FROM Menu_Categories WHERE category_id = $1', [categoryId]);
 
     res.json({ success: true });
   } catch (err) {
@@ -172,9 +164,7 @@ exports.addMenuItem = async (req, res, next) => {
     const { name, description, price, category_id, image_url, preparation_time, is_available } = req.body;
 
     // Verify restaurant ownership
-    const [restaurants] = await pool.query(
-      'SELECT owner_id FROM Restaurants WHERE restaurant_id = ?',
-      [restaurantId]
+    const { rows: restaurants } = await pool.query('SELECT owner_id FROM Restaurants WHERE restaurant_id = $1', [restaurantId]
     );
 
     if (!restaurants[0]) {
@@ -187,10 +177,10 @@ exports.addMenuItem = async (req, res, next) => {
 
 
 
-    const [result] = await pool.query(`
+    const { rows: result } = await pool.query(`
       INSERT INTO Menu_Items 
       (restaurant_id, category_id, name, description, price, image_url, is_available)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
     `, [
       restaurantId,
       category_id || null,
@@ -202,7 +192,7 @@ exports.addMenuItem = async (req, res, next) => {
     ]);
 
     res.status(201).json({
-      menu_item_id: result.insertId,
+      menu_item_id: result.rows[0].id,
       restaurant_id: restaurantId,
       name,
       price,
@@ -220,9 +210,7 @@ exports.updateMenuItem = async (req, res, next) => {
     const updates = req.body;
 
     // Verify restaurant ownership
-    const [restaurants] = await pool.query(
-      'SELECT owner_id FROM Restaurants WHERE restaurant_id = ?',
-      [restaurantId]
+    const { rows: restaurants } = await pool.query('SELECT owner_id FROM Restaurants WHERE restaurant_id = $1', [restaurantId]
     );
 
     if (!restaurants[0]) {
@@ -234,9 +222,7 @@ exports.updateMenuItem = async (req, res, next) => {
     }
 
     // Verify menu item belongs to restaurant
-    const [items] = await pool.query(
-      'SELECT * FROM Menu_Items WHERE menu_item_id = ? AND restaurant_id = ?',
-      [itemId, restaurantId]
+    const { rows: items } = await pool.query('SELECT * FROM Menu_Items WHERE menu_item_id = $1 AND restaurant_id = $2', [itemId, restaurantId]
     );
 
     if (!items[0]) {
@@ -286,9 +272,7 @@ exports.updateMenuItem = async (req, res, next) => {
     );
 
     // Get updated item
-    const [updatedItem] = await pool.query(
-      'SELECT * FROM Menu_Items WHERE menu_item_id = ?',
-      [itemId]
+    const { rows: updatedItem } = await pool.query('SELECT * FROM Menu_Items WHERE menu_item_id = $1', [itemId]
     );
 
     res.json(updatedItem[0]);
@@ -303,9 +287,7 @@ exports.deleteMenuItem = async (req, res, next) => {
     const { restaurantId, itemId } = req.params;
 
     // Verify restaurant ownership
-    const [restaurants] = await pool.query(
-      'SELECT owner_id FROM Restaurants WHERE restaurant_id = ?',
-      [restaurantId]
+    const { rows: restaurants } = await pool.query('SELECT owner_id FROM Restaurants WHERE restaurant_id = $1', [restaurantId]
     );
 
     if (!restaurants[0]) {
@@ -316,9 +298,7 @@ exports.deleteMenuItem = async (req, res, next) => {
       return next(new AppError('Not authorized', 403));
     }
 
-    const [result] = await pool.query(
-      'DELETE FROM Menu_Items WHERE menu_item_id = ? AND restaurant_id = ?',
-      [itemId, restaurantId]
+    const { rows: result } = await pool.query('DELETE FROM Menu_Items WHERE menu_item_id = $1 AND restaurant_id = $2', [itemId, restaurantId]
     );
 
     if (result.affectedRows === 0) {
@@ -338,11 +318,11 @@ exports.updateInventory = async (req, res, next) => {
     const { stock_quantity, low_stock_threshold } = req.body;
 
     // Verify ownership through menu item
-    const [items] = await pool.query(`
+    const { rows: items } = await pool.query(`
       SELECT mi.*, r.owner_id
       FROM Menu_Items mi
       JOIN Restaurants r ON mi.restaurant_id = r.restaurant_id
-      WHERE mi.menu_item_id = ?
+      WHERE mi.menu_item_id = $1
     `, [itemId]);
 
     if (!items[0]) {
@@ -356,7 +336,7 @@ exports.updateInventory = async (req, res, next) => {
     // Update or insert inventory
     await pool.query(`
       INSERT INTO Menu_Item_Inventory (menu_item_id, stock_quantity, low_stock_threshold, last_restocked_at, last_restocked_quantity)
-      VALUES (?, ?, ?, NOW(), ?)
+      VALUES ($1, $2, $3, NOW(), $4)
       ON DUPLICATE KEY UPDATE
         stock_quantity = VALUES(stock_quantity),
         low_stock_threshold = VALUES(low_stock_threshold),

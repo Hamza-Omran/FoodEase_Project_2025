@@ -19,10 +19,12 @@ class CartRepository {
     }
 
     async add(customerId, menuItemId, quantity, notes) {
-        await pool.query(
-            'SELECT * FROM sp_add_to_cart($1, $2, $3, $4)',
-            [customerId, menuItemId, quantity, notes]
-        );
+        await pool.query(`SELECT * FROM sp_add_to_cart($1, $2, $3, $4)', [
+            customerId,
+            menuItemId,
+            quantity,
+            notes
+        ]);
     }
 
     async update(cartItemId, quantity) {
