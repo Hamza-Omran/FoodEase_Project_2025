@@ -37,13 +37,14 @@ exports.getForSearch = async (req, res, next) => {
                  estimated_delivery_time, delivery_fee, city, description
                  FROM Restaurants WHERE status = 'active'`;
     const params = [];
+    let paramIndex = 1;
 
     if (cuisine) {
-      query += ' AND cuisine_type = ?';
+      query += ` AND cuisine_type = $${paramIndex++}`;
       params.push(cuisine);
     }
     if (city) {
-      query += ' AND city = ?';
+      query += ` AND city = $${paramIndex++}`;
       params.push(city);
     }
 
@@ -157,21 +158,21 @@ exports.getRestaurantOrders = async (req, res, next) => {
     }
 
     const { rows: orders } = await pool.query(`
-      SELECT 
-        o.*,
-        u.full_name as customer_name,
-        u.phone as customer_phone,
-        ca.street_address as delivery_address,
-        ca.city as delivery_city,
-        IF(rr.review_id IS NOT NULL, TRUE, FALSE) as has_review
-      FROM Orders o
-      JOIN Customers c ON o.customer_id = c.customer_id
-      JOIN Users u ON c.user_id = u.user_id
-      JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
-      LEFT JOIN Restaurant_Reviews rr ON o.order_id = rr.order_id
-      WHERE o.restaurant_id = $1
-      ORDER BY o.order_date DESC
-    `, [id]);
+        SELECT 
+          o.*,
+          u.full_name as customer_name,
+          u.phone as customer_phone,
+          ca.street_address as delivery_address,
+          ca.city as delivery_city,
+          CASE WHEN rr.review_id IS NOT NULL THEN TRUE ELSE FALSE END as has_review
+        FROM Orders o
+        JOIN Customers c ON o.customer_id = c.customer_id
+        JOIN Users u ON c.user_id = u.user_id
+        JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
+        LEFT JOIN Restaurant_Reviews rr ON o.order_id = rr.order_id
+        WHERE o.restaurant_id = $1
+        ORDER BY o.order_date DESC
+      `, [id]);
 
     res.json(orders);
   } catch (err) {

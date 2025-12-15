@@ -1,18 +1,16 @@
 const { Pool } = require('pg');
-const env = require('./env');
+const env = require('./env'); // Ensure env vars are loaded
 
-console.log(`DB Config: Host=${env.DB_HOST} Port=${env.DB_PORT} User=${env.DB_USER} DB=${env.DB_NAME} SSL=${env.NODE_ENV === 'production'}`);
+// Prefer DATABASE_URL for connection string (works best with Vercel/Supabase pooler)
+const connectionString = process.env.DATABASE_URL || `postgresql://${env.DB_USER}:${env.DB_PASSWORD}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
+
+console.log(`DB Config: Using Connection String: ${connectionString.replace(/:[^:@]*@/, ':****@')}`); // Log masked string
 
 const pool = new Pool({
-    host: env.DB_HOST,
-    port: env.DB_PORT || 5432,
-    user: env.DB_USER,
-    password: env.DB_PASSWORD,
-    database: env.DB_NAME,
+    connectionString,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
-    // SSL for production
     ssl: env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
