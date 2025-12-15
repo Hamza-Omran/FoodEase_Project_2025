@@ -44,7 +44,7 @@ exports.addAddress = async (req, res, next) => {
     // If setting as default, unset other default addresses BEFORE insert
     if (is_default) {
       await pool.query(
-        'UPDATE Customer_Addresses SET is_default = FALSE WHERE customer_id = ',
+        'UPDATE Customer_Addresses SET is_default = FALSE WHERE customer_id = $1',
         [customer.customer_id]
       );
     }
@@ -53,12 +53,12 @@ exports.addAddress = async (req, res, next) => {
     const { rows: result } = await pool.query(
       `INSERT INTO Customer_Addresses 
        (customer_id, street_address, city, state, is_default) 
-       VALUES (, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5) RETURNING address_id`,
       [customer.customer_id, street_address, city, state, is_default || false]
     );
 
     res.status(201).json({
-      address_id: result.insertId,
+      address_id: result[0].address_id,
       customer_id: customer.customer_id,
       street_address,
       city,
@@ -86,7 +86,7 @@ exports.updateAddress = async (req, res, next) => {
     }
 
     const { rows: addresses } = await pool.query(
-      'SELECT * FROM Customer_Addresses WHERE address_id =  AND customer_id = ?',
+      'SELECT * FROM Customer_Addresses WHERE address_id = $1 AND customer_id = $2',
       [addressId, customer.customer_id]
     );
 
@@ -99,15 +99,15 @@ exports.updateAddress = async (req, res, next) => {
     // If setting as default, unset other default addresses
     if (is_default) {
       await pool.query(
-        'UPDATE Customer_Addresses SET is_default = FALSE WHERE customer_id =  AND address_id != ?',
+        'UPDATE Customer_Addresses SET is_default = FALSE WHERE customer_id = $1 AND address_id != $2',
         [customer.customer_id, addressId]
       );
     }
 
     await pool.query(
       `UPDATE Customer_Addresses 
-       SET street_address = , city = ?, state = ?, is_default = ?
-       WHERE address_id = ? AND customer_id = ?`,
+       SET street_address = $1, city = $2, state = $3, is_default = $4
+       WHERE address_id = $5 AND customer_id = $6`,
       [street_address, city, state, is_default || false, addressId, customer.customer_id]
     );
 
@@ -132,12 +132,12 @@ exports.deleteAddress = async (req, res, next) => {
       return next(new AppError('Customer not found', 404));
     }
 
-    const { rows: result } = await pool.query(
-      'DELETE FROM Customer_Addresses WHERE address_id =  AND customer_id = ?',
+    const result = await pool.query(
+      'DELETE FROM Customer_Addresses WHERE address_id = $1 AND customer_id = $2',
       [addressId, customer.customer_id]
     );
 
-    if (result.affectedRows === 0) {
+    if (result.rowCount === 0) {
       return next(new AppError('Address not found', 404));
     }
 
@@ -146,4 +146,3 @@ exports.deleteAddress = async (req, res, next) => {
     next(err);
   }
 };
-

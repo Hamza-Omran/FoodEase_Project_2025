@@ -77,7 +77,7 @@ exports.getDriverAssignments = async (req, res, next) => {
       JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
       JOIN Customers c ON o.customer_id = c.customer_id
       JOIN Users u ON c.user_id = u.user_id
-      WHERE da.driver_id = $2
+      WHERE da.driver_id = $1
       ORDER BY 
         CASE da.delivery_status
           WHEN 'in_transit' THEN 1
@@ -101,7 +101,7 @@ exports.acceptOrder = async (req, res, next) => {
 
     // Get driver_id
     const { rows: drivers } = await pool.query(
-      'SELECT driver_id, is_available FROM Drivers WHERE user_id = $3',
+      'SELECT driver_id, is_available FROM Drivers WHERE user_id = $1',
       [req.user.id]
     );
 
@@ -113,7 +113,7 @@ exports.acceptOrder = async (req, res, next) => {
 
     // Check if order is available
     const { rows: orders } = await pool.query(
-      'SELECT * FROM Orders WHERE order_id = $4 AND status IN ("ready", "confirmed", "preparing")',
+      'SELECT * FROM Orders WHERE order_id = $1 AND status IN (\'ready\', \'confirmed\', \'preparing\')',
       [orderId]
     );
 
@@ -122,12 +122,12 @@ exports.acceptOrder = async (req, res, next) => {
     }
 
     // Check if already assigned
-    const { rows: temp } = await pool.query(
-      'SELECT assignment_id FROM Delivery_Assignments WHERE order_id = $5',
+    const { rows: existing } = await pool.query(
+      'SELECT assignment_id FROM Delivery_Assignments WHERE order_id = $1',
       [orderId]
     );
 
-    if (existing) {
+    if (existing && existing.length > 0) {
       return next(new AppError('Order already assigned to another driver', 400));
     }
 
@@ -138,24 +138,24 @@ exports.acceptOrder = async (req, res, next) => {
     const { rows: result } = await pool.query(`
       INSERT INTO Delivery_Assignments (
         order_id, driver_id, delivery_status, delivery_fee, driver_earnings
-      ) VALUES ($6, $7, 'accepted', $8, $9)
+      ) VALUES ($1, $2, 'accepted', $3, $4) RETURNING assignment_id
     `, [orderId, driverId, deliveryFee, driverEarnings]);
 
     // Update driver availability
     await pool.query(
-      'UPDATE Drivers SET is_available = FALSE WHERE driver_id = $10',
+      'UPDATE Drivers SET is_available = FALSE WHERE driver_id = $1',
       [driverId]
     );
 
     // Update order status
     await pool.query(
-      'UPDATE Orders SET status = "out_for_delivery" WHERE order_id = $11',
+      'UPDATE Orders SET status = \'out_for_delivery\' WHERE order_id = $1',
       [orderId]
     );
 
     res.json({
       success: true,
-      assignment_id: result.insertId,
+      assignment_id: result[0].assignment_id,
       message: 'Order accepted successfully'
     });
   } catch (err) {
@@ -177,7 +177,7 @@ exports.updateDeliveryStatus = async (req, res, next) => {
 
     // Get driver_id
     const { rows: drivers } = await pool.query(
-      'SELECT driver_id FROM Drivers WHERE user_id = $12',
+      'SELECT driver_id FROM Drivers WHERE user_id = $1',
       [req.user.id]
     );
 
@@ -187,7 +187,7 @@ exports.updateDeliveryStatus = async (req, res, next) => {
 
     // Verify assignment belongs to driver
     const { rows: assignments } = await pool.query(
-      'SELECT * FROM Delivery_Assignments WHERE assignment_id = $13 AND driver_id = $14',
+      'SELECT * FROM Delivery_Assignments WHERE assignment_id = $1 AND driver_id = $2',
       [assignmentId, drivers[0].driver_id]
     );
 
@@ -197,31 +197,41 @@ exports.updateDeliveryStatus = async (req, res, next) => {
 
     const assignment = assignments[0];
 
-    // Update assignment
-    const updates = {
-      delivery_status
-    };
+    // Update assignment with dynamic fields
+    const updates = { delivery_status };
+    if (latitude) updates.latitude = latitude;
+    if (longitude) updates.longitude = longitude;
+    if (notes) updates.notes = notes;
 
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
 
+    for (const key in updates) {
+      if (updates[key] !== undefined) {
+        fields.push(`${key} = $${paramIndex}`);
+        values.push(updates[key]);
+        paramIndex++;
+      }
+    }
 
-    const fields = Object.keys(updates).map(k => `${k} = $15`).join(`, ');
-    const values = [...Object.values(updates), assignmentId];
+    values.push(assignmentId);
 
     await pool.query(
-      `UPDATE Delivery_Assignments SET ${fields} WHERE assignment_id = $16`,
+      `UPDATE Delivery_Assignments SET ${fields.join(', ')} WHERE assignment_id = $${paramIndex}`,
       values
     );
 
     // Update order status and payment status
     if (delivery_status === 'delivered') {
       await pool.query(
-        'UPDATE Orders SET status = "delivered", payment_status = "completed" WHERE order_id = $17',
+        'UPDATE Orders SET status = \'delivered\', payment_status = \'completed\' WHERE order_id = $1',
         [assignment.order_id]
       );
 
       // Make driver available again
       await pool.query(
-        'UPDATE Drivers SET is_available = TRUE WHERE driver_id = $18',
+        'UPDATE Drivers SET is_available = TRUE WHERE driver_id = $1',
         [drivers[0].driver_id]
       );
     }
@@ -236,7 +246,7 @@ exports.updateDeliveryStatus = async (req, res, next) => {
 exports.getDriverStats = async (req, res, next) => {
   try {
     const { rows: drivers } = await pool.query(
-      'SELECT * FROM Drivers WHERE user_id = $19',
+      'SELECT * FROM Drivers WHERE user_id = $1',
       [req.user.id]
     );
 
@@ -247,26 +257,30 @@ exports.getDriverStats = async (req, res, next) => {
     const driver = drivers[0];
 
     // Get today's earnings
-    const [[todayStats]] = await pool.query(`
+    const { rows: todayStatsResult } = await pool.query(`
       SELECT 
         COUNT(*) as deliveries_today,
         SUM(driver_earnings) as earnings_today
       FROM Delivery_Assignments
-      WHERE driver_id = $20
+      WHERE driver_id = $1
         AND delivery_status = 'delivered'
-        AND DATE(assigned_at) = CURDATE()
+        AND DATE(assigned_at) = CURRENT_DATE
     `, [driver.driver_id]);
 
+    const todayStats = todayStatsResult[0] || {};
+
     // Get this week's earnings
-    const [[weekStats]] = await pool.query(`
+    const { rows: weekStatsResult } = await pool.query(`
       SELECT 
         COUNT(*) as deliveries_week,
         SUM(driver_earnings) as earnings_week
       FROM Delivery_Assignments
-      WHERE driver_id = $21
+      WHERE driver_id = $1
         AND delivery_status = 'delivered'
-        AND YEARWEEK(assigned_at, 1) = YEARWEEK(CURDATE(), 1)
+        AND date_trunc('week', assigned_at) = date_trunc('week', CURRENT_DATE)
     `, [driver.driver_id]);
+
+    const weekStats = weekStatsResult[0] || {};
 
     res.json({
       ...driver,
@@ -291,7 +305,7 @@ exports.assignDriver = async (req, res, next) => {
   try {
     const { orderId, driverId } = req.body;
 
-    await pool.query('CALL sp_assign_driver($22, $23)', [orderId, driverId]);
+    await pool.query('SELECT * FROM sp_assign_driver($1, $2)', [orderId, driverId]);
 
     res.json({ success: true });
   } catch (err) {
@@ -304,7 +318,9 @@ exports.getAvailableDrivers = async (req, res, next) => {
   try {
     const { restaurantId } = req.params;
 
-    await pool.query('CALL sp_get_available_drivers($24, $25)', [restaurantId, 50]);
+    // Note: This logic previously called a stored procedure.
+    // Ensure the SP function signature matches: sp_get_available_drivers(restaurant_id, limit)
+    await pool.query('SELECT * FROM sp_get_available_drivers($1, $2)', [restaurantId, 50]);
 
     const { rows: drivers } = await pool.query(`
       SELECT 
