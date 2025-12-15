@@ -4,7 +4,7 @@ const AppError = require('../utils/AppError');
 // Get available orders for drivers (orders that are ready but not assigned)
 exports.getAvailableOrders = async (req, res, next) => {
   try {
-    const [orders] = await pool.query(`
+    const { rows: orders } = await pool.query(`
       SELECT 
         o.order_id,
         o.order_number,
@@ -43,8 +43,8 @@ exports.getAvailableOrders = async (req, res, next) => {
 exports.getDriverAssignments = async (req, res, next) => {
   try {
     // Get driver_id from user_id
-    const [drivers] = await pool.query(
-      'SELECT driver_id FROM Drivers WHERE user_id = ?',
+    const { rows: drivers } = await pool.query(
+      'SELECT driver_id FROM Drivers WHERE user_id = $1',
       [req.user.id]
     );
 
@@ -54,7 +54,7 @@ exports.getDriverAssignments = async (req, res, next) => {
 
     const driverId = drivers[0].driver_id;
 
-    const [assignments] = await pool.query(`
+    const { rows: assignments } = await pool.query(`
       SELECT 
         da.assignment_id,
         da.delivery_status,
@@ -77,7 +77,7 @@ exports.getDriverAssignments = async (req, res, next) => {
       JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
       JOIN Customers c ON o.customer_id = c.customer_id
       JOIN Users u ON c.user_id = u.user_id
-      WHERE da.driver_id = ?
+      WHERE da.driver_id = $2
       ORDER BY 
         CASE da.delivery_status
           WHEN 'in_transit' THEN 1
@@ -100,8 +100,8 @@ exports.acceptOrder = async (req, res, next) => {
     const { orderId } = req.params;
 
     // Get driver_id
-    const [drivers] = await pool.query(
-      'SELECT driver_id, is_available FROM Drivers WHERE user_id = ?',
+    const { rows: drivers } = await pool.query(
+      'SELECT driver_id, is_available FROM Drivers WHERE user_id = $3',
       [req.user.id]
     );
 
@@ -112,8 +112,8 @@ exports.acceptOrder = async (req, res, next) => {
     const driverId = drivers[0].driver_id;
 
     // Check if order is available
-    const [orders] = await pool.query(
-      'SELECT * FROM Orders WHERE order_id = ? AND status IN ("ready", "confirmed", "preparing")',
+    const { rows: orders } = await pool.query(
+      'SELECT * FROM Orders WHERE order_id = $4 AND status IN ("ready", "confirmed", "preparing")',
       [orderId]
     );
 
@@ -122,8 +122,8 @@ exports.acceptOrder = async (req, res, next) => {
     }
 
     // Check if already assigned
-    const [[existing]] = await pool.query(
-      'SELECT assignment_id FROM Delivery_Assignments WHERE order_id = ?',
+    const { rows: temp } = await pool.query(
+      'SELECT assignment_id FROM Delivery_Assignments WHERE order_id = $5',
       [orderId]
     );
 
@@ -135,21 +135,21 @@ exports.acceptOrder = async (req, res, next) => {
     const driverEarnings = deliveryFee * 0.7; // 70% to driver
 
     // Create assignment
-    const [result] = await pool.query(`
+    const { rows: result } = await pool.query(`
       INSERT INTO Delivery_Assignments (
         order_id, driver_id, delivery_status, delivery_fee, driver_earnings
-      ) VALUES (?, ?, 'accepted', ?, ?)
+      ) VALUES ($6, $7, 'accepted', $8, $9)
     `, [orderId, driverId, deliveryFee, driverEarnings]);
 
     // Update driver availability
     await pool.query(
-      'UPDATE Drivers SET is_available = FALSE WHERE driver_id = ?',
+      'UPDATE Drivers SET is_available = FALSE WHERE driver_id = $10',
       [driverId]
     );
 
     // Update order status
     await pool.query(
-      'UPDATE Orders SET status = "out_for_delivery" WHERE order_id = ?',
+      'UPDATE Orders SET status = "out_for_delivery" WHERE order_id = $11',
       [orderId]
     );
 
@@ -176,8 +176,8 @@ exports.updateDeliveryStatus = async (req, res, next) => {
     }
 
     // Get driver_id
-    const [drivers] = await pool.query(
-      'SELECT driver_id FROM Drivers WHERE user_id = ?',
+    const { rows: drivers } = await pool.query(
+      'SELECT driver_id FROM Drivers WHERE user_id = $12',
       [req.user.id]
     );
 
@@ -186,8 +186,8 @@ exports.updateDeliveryStatus = async (req, res, next) => {
     }
 
     // Verify assignment belongs to driver
-    const [assignments] = await pool.query(
-      'SELECT * FROM Delivery_Assignments WHERE assignment_id = ? AND driver_id = ?',
+    const { rows: assignments } = await pool.query(
+      'SELECT * FROM Delivery_Assignments WHERE assignment_id = $13 AND driver_id = $14',
       [assignmentId, drivers[0].driver_id]
     );
 
@@ -204,24 +204,24 @@ exports.updateDeliveryStatus = async (req, res, next) => {
 
 
 
-    const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+    const fields = Object.keys(updates).map(k => `${k} = $15`).join(', ');
     const values = [...Object.values(updates), assignmentId];
 
     await pool.query(
-      `UPDATE Delivery_Assignments SET ${fields} WHERE assignment_id = ?`,
+      `UPDATE Delivery_Assignments SET ${fields} WHERE assignment_id = $16`,
       values
     );
 
     // Update order status and payment status
     if (delivery_status === 'delivered') {
       await pool.query(
-        'UPDATE Orders SET status = "delivered", payment_status = "completed" WHERE order_id = ?',
+        'UPDATE Orders SET status = "delivered", payment_status = "completed" WHERE order_id = $17',
         [assignment.order_id]
       );
 
       // Make driver available again
       await pool.query(
-        'UPDATE Drivers SET is_available = TRUE WHERE driver_id = ?',
+        'UPDATE Drivers SET is_available = TRUE WHERE driver_id = $18',
         [drivers[0].driver_id]
       );
     }
@@ -235,8 +235,8 @@ exports.updateDeliveryStatus = async (req, res, next) => {
 // Get driver statistics
 exports.getDriverStats = async (req, res, next) => {
   try {
-    const [drivers] = await pool.query(
-      'SELECT * FROM Drivers WHERE user_id = ?',
+    const { rows: drivers } = await pool.query(
+      'SELECT * FROM Drivers WHERE user_id = $19',
       [req.user.id]
     );
 
@@ -252,7 +252,7 @@ exports.getDriverStats = async (req, res, next) => {
         COUNT(*) as deliveries_today,
         SUM(driver_earnings) as earnings_today
       FROM Delivery_Assignments
-      WHERE driver_id = ?
+      WHERE driver_id = $20
         AND delivery_status = 'delivered'
         AND DATE(assigned_at) = CURDATE()
     `, [driver.driver_id]);
@@ -263,7 +263,7 @@ exports.getDriverStats = async (req, res, next) => {
         COUNT(*) as deliveries_week,
         SUM(driver_earnings) as earnings_week
       FROM Delivery_Assignments
-      WHERE driver_id = ?
+      WHERE driver_id = $21
         AND delivery_status = 'delivered'
         AND YEARWEEK(assigned_at, 1) = YEARWEEK(CURDATE(), 1)
     `, [driver.driver_id]);
@@ -291,7 +291,7 @@ exports.assignDriver = async (req, res, next) => {
   try {
     const { orderId, driverId } = req.body;
 
-    await pool.query('CALL sp_assign_driver(?, ?)', [orderId, driverId]);
+    await pool.query('CALL sp_assign_driver($22, $23)', [orderId, driverId]);
 
     res.json({ success: true });
   } catch (err) {
@@ -304,9 +304,9 @@ exports.getAvailableDrivers = async (req, res, next) => {
   try {
     const { restaurantId } = req.params;
 
-    await pool.query('CALL sp_get_available_drivers(?, ?)', [restaurantId, 50]);
+    await pool.query('CALL sp_get_available_drivers($24, $25)', [restaurantId, 50]);
 
-    const [drivers] = await pool.query(`
+    const { rows: drivers } = await pool.query(`
       SELECT 
         d.driver_id,
         u.full_name,
