@@ -11,11 +11,15 @@ exports.createOrder = async (req, res, next) => {
     const { restaurant_id, address_id, special_instructions, payment_method, coupon_code } = req.body;
 
     // Call stored procedure
-    await pool.query(`SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)', [customerId, restaurant_id, address_id, special_instructions, payment_method, coupon_code]
+    await pool.query(
+      'SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)',
+      [customerId, restaurant_id, address_id, special_instructions, payment_method, coupon_code]
     );
 
     // Get the latest order
-    const { rows: orders } = await pool.query('SELECT * FROM Orders WHERE customer_id = $1 ORDER BY order_date DESC LIMIT 1', [customerId]
+    const { rows: orders } = await pool.query(
+      'SELECT * FROM Orders WHERE customer_id = $1 ORDER BY order_date DESC LIMIT 1',
+      [customerId]
     );
 
     res.status(201).json(orders[0]);
@@ -32,16 +36,18 @@ exports.getMyOrders = async (req, res, next) => {
       return next(new AppError('Customer not found', 404));
     }
 
-    const { rows: orders } = await pool.query(`SELECT 
+    const { rows: orders } = await pool.query(
+      `SELECT 
         o.*,
         r.name as restaurant_name,
         r.image_url as restaurant_image,
-        IF(rr.review_id IS NOT NULL, TRUE, FALSE) as has_review
+        CASE WHEN rr.review_id IS NOT NULL THEN TRUE ELSE FALSE END as has_review
       FROM Orders o
       JOIN Restaurants r ON o.restaurant_id = r.restaurant_id
       LEFT JOIN Restaurant_Reviews rr ON o.order_id = rr.order_id
       WHERE o.customer_id = $1
-      ORDER BY o.order_date DESC`, [customer.customer_id]
+      ORDER BY o.order_date DESC`,
+      [customer.customer_id]
     );
 
     res.json(orders);
@@ -64,17 +70,17 @@ exports.getOrder = async (req, res, next) => {
         u.email as customer_email,
         ca.street_address,
         ca.city,
-        CONCAT(ca.street_address, ', ', ca.city) as delivery_address,
+        ca.street_address || ', ' || ca.city as delivery_address,
         r.name as restaurant_name,
         r.phone as restaurant_phone,
-        IF(rr.review_id IS NOT NULL, TRUE, FALSE) as has_review
+        CASE WHEN rr.review_id IS NOT NULL THEN TRUE ELSE FALSE END as has_review
       FROM Orders o
       JOIN Customers c ON o.customer_id = c.customer_id
       JOIN Users u ON c.user_id = u.user_id
       JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
       JOIN Restaurants r ON o.restaurant_id = r.restaurant_id
       LEFT JOIN Restaurant_Reviews rr ON o.order_id = rr.order_id
-      WHERE o.order_id = ?
+      WHERE o.order_id = $1
     `, [id]);
 
     if (!orders[0]) {
@@ -115,12 +121,10 @@ exports.updateOrderStatus = async (req, res, next) => {
     }
 
     // Call stored procedure
-    await pool.query(`SELECT * FROM sp_update_order_status($1, $2, $3, $4)', [
-      id,
-      status,
-      req.user.id,
-      null // cancellation_reason
-    ]);
+    await pool.query(
+      'SELECT * FROM sp_update_order_status($1, $2, $3, $4)',
+      [id, status, req.user.id, null]
+    );
 
     res.json({ success: true, message: 'Order status updated' });
   } catch (err) {
