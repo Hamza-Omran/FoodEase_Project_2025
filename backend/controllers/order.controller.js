@@ -4,28 +4,6 @@ const cartRepo = require('../repositories/cart.repo');
 const AppError = require('../utils/AppError'); // FIXED: Capital 'A'
 const pool = require('../config/db');
 
-// Create order
-exports.createOrder = async (req, res, next) => {
-  try {
-    const customerId = req.user.customerId;
-    const { restaurant_id, address_id, special_instructions, payment_method, coupon_code } = req.body;
-
-    // Call stored procedure
-    await pool.query(
-      'SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)',
-      [customerId, restaurant_id, address_id, special_instructions, payment_method, coupon_code]
-    );
-
-    // Get the latest order
-    const { rows: orders } = await pool.query('SELECT * FROM Orders WHERE customer_id = $1 ORDER BY order_date DESC LIMIT 1', [customerId]
-    );
-
-    res.status(201).json(orders[0]);
-  } catch (err) {
-    next(err);
-  }
-};
-
 // Get my orders
 exports.getMyOrders = async (req, res, next) => {
   try {
@@ -76,7 +54,7 @@ exports.getOrder = async (req, res, next) => {
       JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
       JOIN Restaurants r ON o.restaurant_id = r.restaurant_id
       LEFT JOIN Restaurant_Reviews rr ON o.order_id = rr.order_id
-      WHERE o.order_id = ?
+      WHERE o.order_id = $1
     `, [id]);
 
     if (!orders[0]) {
@@ -117,12 +95,10 @@ exports.updateOrderStatus = async (req, res, next) => {
     }
 
     // Call stored procedure
-    await pool.query(`SELECT * FROM sp_update_order_status($1, $2, $3, $4)', [
-      id,
-      status,
-      req.user.id,
-      null // cancellation_reason
-    ]);
+    await pool.query(
+      'SELECT * FROM sp_update_order_status($1, $2, $3, $4)',
+      [id, status, req.user.id, null] // cancellation_reason
+    );
 
     res.json({ success: true, message: 'Order status updated' });
   } catch (err) {
@@ -190,6 +166,9 @@ exports.placeOrder = async (req, res, next) => {
 exports.listUserOrders = async (req, res, next) => {
   try {
     const customer = await customerRepo.findByUserId(req.user.id);
+    if (!customer) {
+      return next(new AppError('Customer not found', 404));
+    }
     const orders = await orderRepo.listByUser(customer.customer_id);
     res.json(orders);
   } catch (err) {
@@ -242,6 +221,8 @@ exports.trackOrder = async (req, res, next) => {
   }
 };
 
+// This method is functionally similar to updateOrderStatus, consider consolidating if appropriate.
+// For now, keeping it as per original structure but noting the redundancy.
 exports.updateStatus = async (req, res, next) => {
   try {
     const { status, cancellation_reason } = req.body;
@@ -259,5 +240,4 @@ exports.deleteOrder = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-};
 };
