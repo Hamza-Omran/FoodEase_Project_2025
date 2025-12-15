@@ -7,7 +7,9 @@ exports.addFavorite = async (req, res, next) => {
     const { restaurant_id } = req.body;
 
     // Get customer_id
-    const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]
+    const [customers] = await pool.query(
+      'SELECT customer_id FROM Customers WHERE user_id = ?',
+      [req.user.id]
     );
 
     if (!customers[0]) {
@@ -15,7 +17,9 @@ exports.addFavorite = async (req, res, next) => {
     }
 
     // Check if restaurant exists
-    const [[restaurant]] = await pool.query('SELECT restaurant_id FROM Restaurants WHERE restaurant_id = $1', [restaurant_id]
+    const [[restaurant]] = await pool.query(
+      'SELECT restaurant_id FROM Restaurants WHERE restaurant_id = ?',
+      [restaurant_id]
     );
 
     if (!restaurant) {
@@ -23,7 +27,9 @@ exports.addFavorite = async (req, res, next) => {
     }
 
     // Add to favorites
-    await pool.query('INSERT INTO Favorite_Restaurants (customer_id, restaurant_id) VALUES ($1, $2)', [customers[0].customer_id, restaurant_id]
+    await pool.query(
+      'INSERT INTO Favorite_Restaurants (customer_id, restaurant_id) VALUES (?, ?)',
+      [customers[0].customer_id, restaurant_id]
     );
 
     res.json({ success: true, message: 'Added to favorites' });
@@ -41,14 +47,18 @@ exports.removeFavorite = async (req, res, next) => {
     const { restaurantId } = req.params;
 
     // Get customer_id
-    const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]
+    const [customers] = await pool.query(
+      'SELECT customer_id FROM Customers WHERE user_id = ?',
+      [req.user.id]
     );
 
     if (!customers[0]) {
       return next(new AppError('Customer not found', 404));
     }
 
-    await pool.query('DELETE FROM Favorite_Restaurants WHERE customer_id = $1 AND restaurant_id = $2', [customers[0].customer_id, restaurantId]
+    await pool.query(
+      'DELETE FROM Favorite_Restaurants WHERE customer_id = ? AND restaurant_id = ?',
+      [customers[0].customer_id, restaurantId]
     );
 
     res.json({ success: true, message: 'Removed from favorites' });
@@ -61,19 +71,21 @@ exports.removeFavorite = async (req, res, next) => {
 exports.getFavorites = async (req, res, next) => {
   try {
     // Get customer_id
-    const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]
+    const [customers] = await pool.query(
+      'SELECT customer_id FROM Customers WHERE user_id = ?',
+      [req.user.id]
     );
 
     if (!customers[0]) {
       return next(new AppError('Customer not found', 404));
     }
 
-    const { rows: favorites } = await pool.query(`
+    const [favorites] = await pool.query(`
       SELECT 
         r.*
       FROM Favorite_Restaurants fr
       JOIN Restaurants r ON fr.restaurant_id = r.restaurant_id
-      WHERE fr.customer_id = $1
+      WHERE fr.customer_id = ?
       ORDER BY fr.favorite_id DESC
     `, [customers[0].customer_id]);
 
@@ -89,14 +101,18 @@ exports.isFavorite = async (req, res, next) => {
     const { restaurantId } = req.params;
 
     // Get customer_id
-    const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]
+    const [customers] = await pool.query(
+      'SELECT customer_id FROM Customers WHERE user_id = ?',
+      [req.user.id]
     );
 
     if (!customers[0]) {
       return res.json({ is_favorite: false });
     }
 
-    const [[result]] = await pool.query('SELECT COUNT(*) as count FROM Favorite_Restaurants WHERE customer_id = $1 AND restaurant_id = $2', [customers[0].customer_id, restaurantId]
+    const [[result]] = await pool.query(
+      'SELECT COUNT(*) as count FROM Favorite_Restaurants WHERE customer_id = ? AND restaurant_id = ?',
+      [customers[0].customer_id, restaurantId]
     );
 
     res.json({ is_favorite: result.count > 0 });

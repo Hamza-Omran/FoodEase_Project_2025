@@ -3,11 +3,13 @@ const pool = require('../config/db');
 class OrderRepository {
     async placeOrder(customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode) {
         // 1. Call stored procedure to place order
-        await pool.query(`SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)', [customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode]
+        await pool.query(
+            'CALL sp_place_order(?, ?, ?, ?, ?, ?)',
+            [customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode]
         );
 
         // 2. Get the created order (latest for customer)
-        const { rows: orders } = await pool.query(
+        const [orders] = await pool.query(
             `SELECT 
         o.*,
         r.name as restaurant_name,
@@ -30,13 +32,15 @@ class OrderRepository {
         const order = orders[0];
 
         // 3. Get order items
-        const { rows: items } = await pool.query(`SELECT 
+        const [items] = await pool.query(
+            `SELECT 
         oi.*,
         mi.name,
         mi.image_url
        FROM Order_Items oi
        JOIN Menu_Items mi ON oi.menu_item_id = mi.menu_item_id
-       WHERE oi.order_id = $1`, [order.order_id]
+       WHERE oi.order_id = ?`,
+            [order.order_id]
         );
 
         order.items = items;
@@ -44,14 +48,16 @@ class OrderRepository {
     }
 
     async listByUser(customerId) {
-        const { rows: orders } = await pool.query(`SELECT 
+        const [orders] = await pool.query(
+            `SELECT 
         o.*,
         r.name as restaurant_name,
         r.image_url as restaurant_image
       FROM Orders o
       JOIN Restaurants r ON o.restaurant_id = r.restaurant_id
-      WHERE o.customer_id = $1
-      ORDER BY o.order_date DESC`, [customerId]
+      WHERE o.customer_id = ?
+      ORDER BY o.order_date DESC`,
+            [customerId]
         );
         return orders;
     }
@@ -69,7 +75,7 @@ class OrderRepository {
         // Let's first get the ID if it's a number string, or resolve it.
 
         // Actually, let's just query the view/tables directly to be flexible
-        const { rows: orders } = await pool.query(`
+        const [orders] = await pool.query(`
       SELECT 
         o.*,
         r.name AS restaurant_name,
@@ -94,13 +100,15 @@ class OrderRepository {
         const order = orders[0];
 
         // Get items
-        const { rows: items } = await pool.query(`SELECT 
+        const [items] = await pool.query(
+            `SELECT 
         oi.*,
         mi.name,
         mi.image_url
        FROM Order_Items oi
        JOIN Menu_Items mi ON oi.menu_item_id = mi.menu_item_id
-       WHERE oi.order_id = $1`, [order.order_id]
+       WHERE oi.order_id = ?`,
+            [order.order_id]
         );
 
         order.items = items;
@@ -108,7 +116,7 @@ class OrderRepository {
     }
 
     async updateStatus(orderId, status, userId, cancellationReason) {
-        await pool.query(`SELECT * FROM sp_update_order_status($1, $2, $3, $4)', [
+        await pool.query('CALL sp_update_order_status(?, ?, ?, ?)', [
             orderId,
             status,
             userId,
@@ -116,12 +124,12 @@ class OrderRepository {
         ]);
 
         // Return updated order
-        const { rows: orders } = await pool.query('SELECT * FROM Orders WHERE order_id = $1', [orderId]);
+        const [orders] = await pool.query('SELECT * FROM Orders WHERE order_id = ?', [orderId]);
         return orders[0];
     }
 
     async remove(orderId) {
-        await pool.query('DELETE FROM Orders WHERE order_id = $1', [orderId]);
+        await pool.query('DELETE FROM Orders WHERE order_id = ?', [orderId]);
     }
 }
 

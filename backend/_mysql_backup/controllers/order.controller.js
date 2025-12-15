@@ -11,11 +11,15 @@ exports.createOrder = async (req, res, next) => {
     const { restaurant_id, address_id, special_instructions, payment_method, coupon_code } = req.body;
 
     // Call stored procedure
-    await pool.query(`SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)', [customerId, restaurant_id, address_id, special_instructions, payment_method, coupon_code]
+    await pool.query(
+      'CALL sp_place_order(?, ?, ?, ?, ?, ?)',
+      [customerId, restaurant_id, address_id, special_instructions, payment_method, coupon_code]
     );
 
     // Get the latest order
-    const { rows: orders } = await pool.query('SELECT * FROM Orders WHERE customer_id = $1 ORDER BY order_date DESC LIMIT 1', [customerId]
+    const [orders] = await pool.query(
+      'SELECT * FROM Orders WHERE customer_id = ? ORDER BY order_date DESC LIMIT 1',
+      [customerId]
     );
 
     res.status(201).json(orders[0]);
@@ -32,7 +36,8 @@ exports.getMyOrders = async (req, res, next) => {
       return next(new AppError('Customer not found', 404));
     }
 
-    const { rows: orders } = await pool.query(`SELECT 
+    const [orders] = await pool.query(
+      `SELECT 
         o.*,
         r.name as restaurant_name,
         r.image_url as restaurant_image,
@@ -40,8 +45,9 @@ exports.getMyOrders = async (req, res, next) => {
       FROM Orders o
       JOIN Restaurants r ON o.restaurant_id = r.restaurant_id
       LEFT JOIN Restaurant_Reviews rr ON o.order_id = rr.order_id
-      WHERE o.customer_id = $1
-      ORDER BY o.order_date DESC`, [customer.customer_id]
+      WHERE o.customer_id = ?
+      ORDER BY o.order_date DESC`,
+      [customer.customer_id]
     );
 
     res.json(orders);
@@ -56,7 +62,7 @@ exports.getOrder = async (req, res, next) => {
     const { id } = req.params;
 
     // Get order with customer and address info
-    const { rows: orders } = await pool.query(`
+    const [orders] = await pool.query(`
       SELECT 
         o.*,
         u.full_name as customer_name,
@@ -84,13 +90,13 @@ exports.getOrder = async (req, res, next) => {
     const order = orders[0];
 
     // Get order items
-    const { rows: items } = await pool.query(`
+    const [items] = await pool.query(`
       SELECT 
         oi.*,
         mi.image_url
       FROM Order_Items oi
       LEFT JOIN Menu_Items mi ON oi.menu_item_id = mi.menu_item_id
-      WHERE oi.order_id = $1
+      WHERE oi.order_id = ?
     `, [id]);
 
     order.items = items;
@@ -115,7 +121,7 @@ exports.updateOrderStatus = async (req, res, next) => {
     }
 
     // Call stored procedure
-    await pool.query(`SELECT * FROM sp_update_order_status($1, $2, $3, $4)', [
+    await pool.query('CALL sp_update_order_status(?, ?, ?, ?)', [
       id,
       status,
       req.user.id,

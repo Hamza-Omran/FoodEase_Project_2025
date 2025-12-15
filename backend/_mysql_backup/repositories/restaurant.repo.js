@@ -2,14 +2,16 @@ const pool = require('../config/db');
 
 module.exports = {
   list: async () => {
-    const { rows: rows } = await pool.query(
+    const [rows] = await pool.query(
       'SELECT * FROM Restaurants WHERE status = "active" ORDER BY is_featured DESC, name ASC'
     );
     return rows;
   },
 
   get: async (id) => {
-    const { rows: rows } = await pool.query('SELECT * FROM Restaurants WHERE restaurant_id = $1', [id]
+    const [rows] = await pool.query(
+      'SELECT * FROM Restaurants WHERE restaurant_id = ?',
+      [id]
     );
     return rows[0];
   },
@@ -17,10 +19,12 @@ module.exports = {
   create: async (data) => {
     const { owner_id, name, description, street_address, city, phone, cuisine_type } = data;
 
-    const { rows: result } = await pool.query(`INSERT INTO Restaurants(owner_id, name, street_address, city, description, phone, cuisine_type)
-VALUES($1, $2, $3, $4, $5, $6, $7)`, [owner_id, name, street_address, city, description, phone, cuisine_type]
+    const [result] = await pool.query(
+      `INSERT INTO Restaurants(owner_id, name, street_address, city, description, phone, cuisine_type)
+VALUES(?, ?, ?, ?, ?, ?, ?)`,
+      [owner_id, name, street_address, city, description, phone, cuisine_type]
     );
-    return { restaurant_id: result.rows[0].id, ...data };
+    return { restaurant_id: result.insertId, ...data };
   },
 
   update: async (id, data) => {
@@ -31,6 +35,6 @@ VALUES($1, $2, $3, $4, $5, $6, $7)`, [owner_id, name, street_address, city, desc
   },
 
   remove: async (id) => {
-    await pool.query('DELETE FROM Restaurants WHERE restaurant_id = $1', [id]);
+    await pool.query('DELETE FROM Restaurants WHERE restaurant_id = ?', [id]);
   }
 };

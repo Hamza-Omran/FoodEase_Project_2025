@@ -30,7 +30,9 @@ exports.register = async (req, res, next) => {
     }
 
     // Check if user exists
-    const { rows: existingUsers } = await pool.query('SELECT user_id FROM Users WHERE email = $1', [email]
+    const [existingUsers] = await pool.query(
+      'SELECT user_id FROM Users WHERE email = ?',
+      [email]
     );
 
     if (existingUsers.length > 0) {
@@ -41,17 +43,21 @@ exports.register = async (req, res, next) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
-    const { rows: result } = await pool.query(`INSERT INTO Users (email, password_hash, full_name, phone, role, is_active) 
-       VALUES ($1, $2, $3, $4, $5, TRUE)`, [email, passwordHash, name, phone || null, userRole]
+    const [result] = await pool.query(
+      `INSERT INTO Users (email, password_hash, full_name, phone, role, is_active) 
+       VALUES (?, ?, ?, ?, ?, TRUE)`,
+      [email, passwordHash, name, phone || null, userRole]
     );
 
-    const userId = result.rows[0].id;
+    const userId = result.insertId;
 
     // Generate token
     const token = generateToken(userId);
 
     // Get user data
-    const { rows: users } = await pool.query('SELECT user_id, email, full_name, role, phone FROM Users WHERE user_id = $1', [userId]
+    const [users] = await pool.query(
+      'SELECT user_id, email, full_name, role, phone FROM Users WHERE user_id = ?',
+      [userId]
     );
 
     const user = users[0];
@@ -83,7 +89,9 @@ exports.login = async (req, res, next) => {
     }
 
     // Get user
-    const { rows: users } = await pool.query('SELECT user_id, email, password_hash, full_name, role, phone, is_active FROM Users WHERE email = $1', [email]
+    const [users] = await pool.query(
+      'SELECT user_id, email, password_hash, full_name, role, phone, is_active FROM Users WHERE email = ?',
+      [email]
     );
 
     if (users.length === 0) {
@@ -128,7 +136,9 @@ exports.login = async (req, res, next) => {
 // Get current user
 exports.getMe = async (req, res, next) => {
   try {
-    const { rows: users } = await pool.query('SELECT user_id, email, full_name, role, phone FROM Users WHERE user_id = $1', [req.user.id]
+    const [users] = await pool.query(
+      'SELECT user_id, email, full_name, role, phone FROM Users WHERE user_id = ?',
+      [req.user.id]
     );
 
     if (users.length === 0) {

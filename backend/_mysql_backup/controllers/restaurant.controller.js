@@ -15,7 +15,7 @@ exports.getAll = async (req, res, next) => {
 // Optimized: Get restaurants for home page (minimal fields)
 exports.getForHome = async (req, res, next) => {
   try {
-    const { rows: restaurants } = await pool.query(
+    const [restaurants] = await pool.query(
       `SELECT restaurant_id, name, image_url, rating, cuisine_type, estimated_delivery_time, delivery_fee, is_featured
        FROM Restaurants 
        WHERE status = 'active' 
@@ -49,7 +49,7 @@ exports.getForSearch = async (req, res, next) => {
 
     query += ' ORDER BY name ASC';
 
-    const { rows: restaurants } = await pool.query(query, params);
+    const [restaurants] = await pool.query(query, params);
     res.json(restaurants);
   } catch (err) {
     next(err);
@@ -73,7 +73,9 @@ exports.getById = async (req, res, next) => {
 exports.getMy = async (req, res, next) => {
   try {
 
-    const { rows: restaurants } = await pool.query('SELECT * FROM Restaurants WHERE owner_id = $1', [req.user.id]
+    const [restaurants] = await pool.query(
+      'SELECT * FROM Restaurants WHERE owner_id = ?',
+      [req.user.id]
     );
 
     res.json(restaurants);
@@ -109,7 +111,9 @@ exports.update = async (req, res, next) => {
     const { id } = req.params;
 
     // Verify ownership or admin
-    const { rows: restaurants } = await pool.query('SELECT owner_id FROM Restaurants WHERE restaurant_id = $1', [id]
+    const [restaurants] = await pool.query(
+      'SELECT owner_id FROM Restaurants WHERE restaurant_id = ?',
+      [id]
     );
 
     if (!restaurants[0]) {
@@ -144,7 +148,9 @@ exports.getRestaurantOrders = async (req, res, next) => {
 
     // Verify restaurant ownership (unless admin)
     if (req.user.role === 'restaurant_owner') {
-      const { rows: restaurants } = await pool.query('SELECT owner_id FROM Restaurants WHERE restaurant_id = $1', [id]
+      const [restaurants] = await pool.query(
+        'SELECT owner_id FROM Restaurants WHERE restaurant_id = ?',
+        [id]
       );
 
       if (!restaurants[0]) {
@@ -156,7 +162,7 @@ exports.getRestaurantOrders = async (req, res, next) => {
       }
     }
 
-    const { rows: orders } = await pool.query(`
+    const [orders] = await pool.query(`
       SELECT 
         o.*,
         u.full_name as customer_name,
@@ -169,7 +175,7 @@ exports.getRestaurantOrders = async (req, res, next) => {
       JOIN Users u ON c.user_id = u.user_id
       JOIN Customer_Addresses ca ON o.delivery_address_id = ca.address_id
       LEFT JOIN Restaurant_Reviews rr ON o.order_id = rr.order_id
-      WHERE o.restaurant_id = $1
+      WHERE o.restaurant_id = ?
       ORDER BY o.order_date DESC
     `, [id]);
 

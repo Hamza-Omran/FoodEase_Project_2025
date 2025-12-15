@@ -20,7 +20,7 @@ exports.protect = async (req, res, next) => {
     const decoded = jwt.verify(token, env.JWT_SECRET);
 
     // Fetch full user data including customer_id if role is 'customer'
-    const { rows: users } = await pool.query('SELECT * FROM Users WHERE user_id = $1', [decoded.id]);
+    const [users] = await pool.query('SELECT * FROM Users WHERE user_id = ?', [decoded.id]);
 
     if (!users[0]) {
       return next(new AppError('User not found', 401));
@@ -35,7 +35,9 @@ exports.protect = async (req, res, next) => {
 
     // If user is a customer, fetch their customer_id
     if (users[0].role === 'customer') {
-      const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [users[0].user_id]
+      const [customers] = await pool.query(
+        'SELECT customer_id FROM Customers WHERE user_id = ?',
+        [users[0].user_id]
       );
 
       if (customers[0]) {
