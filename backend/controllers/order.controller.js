@@ -11,7 +11,9 @@ exports.createOrder = async (req, res, next) => {
     const { restaurant_id, address_id, special_instructions, payment_method, coupon_code } = req.body;
 
     // Call stored procedure
-    await pool.query(`SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)', [customerId, restaurant_id, address_id, special_instructions, payment_method, coupon_code]
+    await pool.query(
+      'SELECT * FROM sp_place_order($1, $2, $3, $4, $5, $6)',
+      [customerId, restaurant_id, address_id, special_instructions, payment_method, coupon_code]
     );
 
     // Get the latest order
@@ -36,7 +38,7 @@ exports.getMyOrders = async (req, res, next) => {
         o.*,
         r.name as restaurant_name,
         r.image_url as restaurant_image,
-        IF(rr.review_id IS NOT NULL, TRUE, FALSE) as has_review
+        CASE WHEN rr.review_id IS NOT NULL THEN TRUE ELSE FALSE END as has_review
       FROM Orders o
       JOIN Restaurants r ON o.restaurant_id = r.restaurant_id
       LEFT JOIN Restaurant_Reviews rr ON o.order_id = rr.order_id
