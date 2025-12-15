@@ -19,23 +19,23 @@ exports.searchRestaurants = async (req, res, next) => {
     const params = [];
 
     if (query) {
-      sql += ' AND (name LIKE ? OR description LIKE ? OR cuisine_type LIKE ?)';
+      sql += ' AND (name LIKE  OR description LIKE ? OR cuisine_type LIKE ?)';
       const searchTerm = `%${query}%`;
       params.push(searchTerm, searchTerm, searchTerm);
     }
 
     if (city) {
-      sql += ' AND city = ?';
+      sql += ' AND city = ';
       params.push(city);
     }
 
     if (cuisine_type) {
-      sql += ' AND cuisine_type = ?';
+      sql += ' AND cuisine_type = ';
       params.push(cuisine_type);
     }
 
     if (min_rating) {
-      sql += ' AND rating >= ?';
+      sql += ' AND rating >= ';
       params.push(parseFloat(min_rating));
     }
 
@@ -46,36 +46,36 @@ exports.searchRestaurants = async (req, res, next) => {
     // Sort
     const allowedSorts = ['rating', 'created_at', 'name', 'delivery_fee'];
     if (allowedSorts.includes(sort_by)) {
-      sql += ` ORDER BY ${sort_by} ${order === 'ASC' ? 'ASC' : 'DESC'}`;
+      sql += ` ORDER BY ${sort_by} ${order === 'ASC'  'ASC' : 'DESC'}`;
     }
 
-    sql += ' LIMIT ? OFFSET ?';
+    sql += ' LIMIT  OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
-    const [restaurants] = await pool.query(sql, params);
+    const { rows: restaurants } = await pool.query(sql, params);
 
     // Get total count
     let countSql = 'SELECT COUNT(*) as total FROM Restaurants WHERE status = "active"';
     const countParams = [];
 
     if (query) {
-      countSql += ' AND (name LIKE ? OR description LIKE ? OR cuisine_type LIKE ?)';
+      countSql += ' AND (name LIKE  OR description LIKE ? OR cuisine_type LIKE ?)';
       const searchTerm = `%${query}%`;
       countParams.push(searchTerm, searchTerm, searchTerm);
     }
 
     if (city) {
-      countSql += ' AND city = ?';
+      countSql += ' AND city = ';
       countParams.push(city);
     }
 
     if (cuisine_type) {
-      countSql += ' AND cuisine_type = ?';
+      countSql += ' AND cuisine_type = ';
       countParams.push(cuisine_type);
     }
 
     if (min_rating) {
-      countSql += ' AND rating >= ?';
+      countSql += ' AND rating >= ';
       countParams.push(parseFloat(min_rating));
     }
 
@@ -124,18 +124,18 @@ exports.searchMenuItems = async (req, res, next) => {
     const params = [];
 
     if (query) {
-      sql += ' AND (mi.name LIKE ? OR mi.description LIKE ?)';
+      sql += ' AND (mi.name LIKE  OR mi.description LIKE ?)';
       const searchTerm = `%${query}%`;
       params.push(searchTerm, searchTerm);
     }
 
     if (restaurant_id) {
-      sql += ' AND mi.restaurant_id = ?';
+      sql += ' AND mi.restaurant_id = ';
       params.push(restaurant_id);
     }
 
     if (category_id) {
-      sql += ' AND mi.category_id = ?';
+      sql += ' AND mi.category_id = ';
       params.push(category_id);
     }
 
@@ -152,19 +152,19 @@ exports.searchMenuItems = async (req, res, next) => {
     }
 
     if (min_price) {
-      sql += ' AND mi.price >= ?';
+      sql += ' AND mi.price >= ';
       params.push(parseFloat(min_price));
     }
 
     if (max_price) {
-      sql += ' AND mi.price <= ?';
+      sql += ' AND mi.price <= ';
       params.push(parseFloat(max_price));
     }
 
-    sql += ' ORDER BY mi.total_orders DESC LIMIT ? OFFSET ?';
+    sql += ' ORDER BY mi.total_orders DESC LIMIT  OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
-    const [items] = await pool.query(sql, params);
+    const { rows: items } = await pool.query(sql, params);
 
     res.json(items);
   } catch (err) {
@@ -176,7 +176,7 @@ exports.searchMenuItems = async (req, res, next) => {
 exports.getFilterOptions = async (req, res, next) => {
   try {
     // Get unique cities
-    const [cities] = await pool.query(`
+    const { rows: cities } = await pool.query(`
       SELECT DISTINCT city 
       FROM Restaurants 
       WHERE status = 'active' AND city IS NOT NULL
@@ -184,7 +184,7 @@ exports.getFilterOptions = async (req, res, next) => {
     `);
 
     // Get unique cuisine types
-    const [cuisines] = await pool.query(`
+    const { rows: cuisines } = await pool.query(`
       SELECT DISTINCT cuisine_type 
       FROM Restaurants 
       WHERE status = 'active' AND cuisine_type IS NOT NULL
@@ -192,7 +192,7 @@ exports.getFilterOptions = async (req, res, next) => {
     `);
 
     // Get price range
-    const [[priceRange]] = await pool.query(`
+    const { rows: temppriceRange } = await pool.query(`
       SELECT 
         MIN(price) as min_price,
         MAX(price) as max_price

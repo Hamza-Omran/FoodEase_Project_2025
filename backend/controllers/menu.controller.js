@@ -94,11 +94,11 @@ exports.updateCategory = async (req, res, next) => {
     const values = [];
 
     if (name) {
-      fields.push('name = ?');
+      fields.push('name = ');
       values.push(name);
     }
     if (description !== undefined) {
-      fields.push('description = ?');
+      fields.push('description = ');
       values.push(description);
     }
 
@@ -110,7 +110,7 @@ exports.updateCategory = async (req, res, next) => {
     values.push(categoryId);
 
     await pool.query(
-      `UPDATE Menu_Categories SET ${fields.join(', ')} WHERE category_id = ?`,
+      `UPDATE Menu_Categories SET ${fields.join(', ')} WHERE category_id = `,
       values
     );
 
@@ -188,7 +188,7 @@ exports.addMenuItem = async (req, res, next) => {
       description || null,
       price,
       image_url || null,
-      is_available !== undefined ? is_available : true
+      is_available !== undefined  is_available : true
     ]);
 
     res.status(201).json({
@@ -234,29 +234,29 @@ exports.updateMenuItem = async (req, res, next) => {
     const values = [];
 
     if (updates.name) {
-      fields.push('name = ?');
+      fields.push('name = ');
       values.push(updates.name);
     }
     if (updates.description !== undefined) {
-      fields.push('description = ?');
+      fields.push('description = ');
       values.push(updates.description);
     }
     if (updates.price !== undefined) {
-      fields.push('price = ?');
+      fields.push('price = ');
       values.push(updates.price);
     }
 
 
     if (updates.category_id !== undefined) {
-      fields.push('category_id = ?');
+      fields.push('category_id = ');
       values.push(updates.category_id);
     }
     if (updates.is_available !== undefined) {
-      fields.push('is_available = ?');
+      fields.push('is_available = ');
       values.push(updates.is_available);
     }
     if (updates.image_url !== undefined) {
-      fields.push('image_url = ?');
+      fields.push('image_url = ');
       values.push(updates.image_url);
     }
 
@@ -267,7 +267,7 @@ exports.updateMenuItem = async (req, res, next) => {
     values.push(itemId);
 
     await pool.query(
-      `UPDATE Menu_Items SET ${fields.join(', ')} WHERE menu_item_id = ?`,
+      `UPDATE Menu_Items SET ${fields.join(', ')} WHERE menu_item_id = `,
       values
     );
 

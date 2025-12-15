@@ -5,17 +5,17 @@ exports.getDailySales = async (req, res, next) => {
   try {
     const { restaurant_id, days = 30 } = req.query;
 
-    let query = 'SELECT * FROM vw_daily_sales WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)';
+    let query = 'SELECT * FROM vw_daily_sales WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL  DAY)';
     const params = [parseInt(days)];
 
     if (restaurant_id) {
-      query += ' AND restaurant_id = ?';
+      query += ' AND restaurant_id = ';
       params.push(restaurant_id);
     }
 
     query += ' ORDER BY order_date DESC';
 
-    const [sales] = await pool.query(query, params);
+    const { rows: sales } = await pool.query(query, params);
     res.json(sales);
   } catch (err) {
     next(err);
@@ -25,7 +25,7 @@ exports.getDailySales = async (req, res, next) => {
 // Restaurant performance
 exports.getRestaurantPerformance = async (req, res, next) => {
   try {
-    const [performance] = await pool.query('SELECT * FROM vw_restaurant_performance ORDER BY revenue_30d DESC');
+    const { rows: performance } = await pool.query('SELECT * FROM vw_restaurant_performance ORDER BY revenue_30d DESC');
     res.json(performance);
   } catch (err) {
     next(err);
@@ -35,7 +35,7 @@ exports.getRestaurantPerformance = async (req, res, next) => {
 // Driver performance
 exports.getDriverPerformance = async (req, res, next) => {
   try {
-    const [performance] = await pool.query('SELECT * FROM vw_driver_performance ORDER BY completed_deliveries DESC');
+    const { rows: performance } = await pool.query('SELECT * FROM vw_driver_performance ORDER BY completed_deliveries DESC');
     res.json(performance);
   } catch (err) {
     next(err);
@@ -51,13 +51,13 @@ exports.getPopularItems = async (req, res, next) => {
     const params = [];
 
     if (restaurant_id) {
-      query += ' WHERE restaurant_id = ?';
+      query += ' WHERE restaurant_id = ';
       params.push(restaurant_id);
     }
 
     query += ' ORDER BY total_orders DESC LIMIT 50';
 
-    const [items] = await pool.query(query, params);
+    const { rows: items } = await pool.query(query, params);
     res.json(items);
   } catch (err) {
     next(err);
@@ -67,7 +67,7 @@ exports.getPopularItems = async (req, res, next) => {
 // Customer analytics
 exports.getCustomerAnalytics = async (req, res, next) => {
   try {
-    const [analytics] = await pool.query(`
+    const { rows: analytics } = await pool.query(`
       SELECT 
         c.customer_id,
         u.full_name,
@@ -115,23 +115,23 @@ exports.exportSalesData = async (req, res, next) => {
     const params = [];
 
     if (start_date) {
-      query += ' AND o.order_date >= ?';
+      query += ' AND o.order_date >= ';
       params.push(start_date);
     }
 
     if (end_date) {
-      query += ' AND o.order_date <= ?';
+      query += ' AND o.order_date <= ';
       params.push(end_date);
     }
 
     if (restaurant_id) {
-      query += ' AND o.restaurant_id = ?';
+      query += ' AND o.restaurant_id = ';
       params.push(restaurant_id);
     }
 
     query += ' ORDER BY o.order_date DESC';
 
-    const [data] = await pool.query(query, params);
+    const { rows: data } = await pool.query(query, params);
     
     // Convert to CSV
     if (data.length === 0) {

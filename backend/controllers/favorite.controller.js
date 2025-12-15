@@ -15,7 +15,7 @@ exports.addFavorite = async (req, res, next) => {
     }
 
     // Check if restaurant exists
-    const [[restaurant]] = await pool.query('SELECT restaurant_id FROM Restaurants WHERE restaurant_id = $1', [restaurant_id]
+    const { rows: temprestaurant } = await pool.query('SELECT restaurant_id FROM Restaurants WHERE restaurant_id = $1', [restaurant_id]
     );
 
     if (!restaurant) {
@@ -96,7 +96,7 @@ exports.isFavorite = async (req, res, next) => {
       return res.json({ is_favorite: false });
     }
 
-    const [[result]] = await pool.query('SELECT COUNT(*) as count FROM Favorite_Restaurants WHERE customer_id = $1 AND restaurant_id = $2', [customers[0].customer_id, restaurantId]
+    const { rows: tempresult } = await pool.query('SELECT COUNT(*) as count FROM Favorite_Restaurants WHERE customer_id = $1 AND restaurant_id = $2', [customers[0].customer_id, restaurantId]
     );
 
     res.json({ is_favorite: result.count > 0 });
