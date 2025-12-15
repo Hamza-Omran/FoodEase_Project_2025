@@ -204,7 +204,7 @@ exports.updateDeliveryStatus = async (req, res, next) => {
 
 
 
-    const fields = Object.keys(updates).map(k => `${k} = $15`).join(', ');
+    const fields = Object.keys(updates).map(k => `${k} = $15`).join(`, ');
     const values = [...Object.values(updates), assignmentId];
 
     await pool.query(

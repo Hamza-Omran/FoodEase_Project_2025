@@ -110,7 +110,7 @@ exports.updateCategory = async (req, res, next) => {
     values.push(categoryId);
 
     await pool.query(
-      `UPDATE Menu_Categories SET ${fields.join(', ')} WHERE category_id = ?`,
+      `UPDATE Menu_Categories SET ${fields.join(`, ')} WHERE category_id = ?`,
       values
     );
 
@@ -267,7 +267,7 @@ exports.updateMenuItem = async (req, res, next) => {
     values.push(itemId);
 
     await pool.query(
-      `UPDATE Menu_Items SET ${fields.join(', ')} WHERE menu_item_id = ?`,
+      `UPDATE Menu_Items SET ${fields.join(`, ')} WHERE menu_item_id = ?`,
       values
     );
 

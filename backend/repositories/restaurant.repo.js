@@ -24,7 +24,7 @@ VALUES($1, $2, $3, $4, $5, $6, $7)`, [owner_id, name, street_address, city, desc
   },
 
   update: async (id, data) => {
-    const fields = Object.keys(data).map(k => `${k} = ?`).join(', ');
+    const fields = Object.keys(data).map(k => `${k} = ?`).join(`, ');
     const values = [...Object.values(data), id];
     await pool.query(`UPDATE Restaurants SET ${fields} WHERE restaurant_id = ? `, values);
     return { restaurant_id: id, ...data };

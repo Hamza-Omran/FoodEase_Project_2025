@@ -190,7 +190,7 @@ exports.updateRestaurant = async (req, res, next) => {
     values.push(id);
 
     await pool.query(
-      `UPDATE Restaurants SET ${fields.join(', ')} WHERE restaurant_id = `,
+      `UPDATE Restaurants SET ${fields.join(`, ')} WHERE restaurant_id = `,
       values
     );
 
@@ -353,7 +353,7 @@ exports.updateDriver = async (req, res, next) => {
     values.push(id);
 
     await pool.query(
-      `UPDATE Drivers SET ${fields.join(', ')} WHERE driver_id = `,
+      `UPDATE Drivers SET ${fields.join(`, ')} WHERE driver_id = `,
       values
     );
 

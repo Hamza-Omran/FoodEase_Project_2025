@@ -31,7 +31,7 @@ module.exports = {
   },
 
   update: async (customerId, data) => {
-    const fields = Object.keys(data).map((k, i) => `${k} = $${i + 1}`).join(', ');
+    const fields = Object.keys(data).map((k, i) => `${k} = $${i + 1}`).join(`, ');
     const values = [...Object.values(data), customerId];
     await pool.query(`UPDATE Customers SET ${fields} WHERE customer_id = $${values.length}`, values);
     return { customer_id: customerId, ...data };
