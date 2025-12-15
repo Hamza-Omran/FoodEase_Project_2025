@@ -69,7 +69,7 @@ exports.getOrder = async (req, res, next) => {
         CONCAT(ca.street_address, ', ', ca.city) as delivery_address,
         r.name as restaurant_name,
         r.phone as restaurant_phone,
-        IF(rr.review_id IS NOT NULL, TRUE, FALSE) as has_review
+        CASE WHEN rr.review_id IS NOT NULL THEN TRUE ELSE FALSE END as has_review
       FROM Orders o
       JOIN Customers c ON o.customer_id = c.customer_id
       JOIN Users u ON c.user_id = u.user_id
