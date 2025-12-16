@@ -11,6 +11,7 @@ import {
   faTruck,
   faBox
 } from '@fortawesome/free-solid-svg-icons';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function RestaurantMenu() {
   const { id } = useParams();
@@ -19,6 +20,7 @@ export default function RestaurantMenu() {
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(null); // Track which item is being added
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export default function RestaurantMenu() {
     }
 
     try {
+      setAddingToCart(menuItemId); // Show loading for this specific item
       await cartAPI.add({
         menu_item_id: menuItemId,
         quantity: 1,
@@ -61,6 +64,8 @@ export default function RestaurantMenu() {
       alert('Item added to cart!');
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to add item to cart');
+    } finally {
+      setAddingToCart(null); // Clear loading state
     }
   };
 
@@ -73,11 +78,7 @@ export default function RestaurantMenu() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-xl text-gray-900">Loading restaurant...</div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
@@ -156,9 +157,10 @@ export default function RestaurantMenu() {
                   </span>
                   <button
                     onClick={() => handleAddToCart(item.menu_item_id)}
-                    className="bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                    disabled={addingToCart === item.menu_item_id}
+                    className="bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Add to Cart
+                    {addingToCart === item.menu_item_id ? 'Adding...' : 'Add to Cart'}
                   </button>
                 </div>
               </div>

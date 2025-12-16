@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -30,11 +31,7 @@ export default function CartPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-xl">Loading cart...</div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!cart || cart.length === 0) {
