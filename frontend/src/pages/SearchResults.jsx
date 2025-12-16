@@ -29,7 +29,8 @@ export default function SearchResults() {
     if (!imagePath) return '';
     if (imagePath.startsWith('http')) return imagePath;
     const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-    return `http://localhost:3000/${cleanPath}`;
+    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1').replace('/api/v1', '');
+    return `${baseUrl}/${cleanPath}`;
   };
 
   if (loading) return <div className="text-center py-12">Searching...</div>;

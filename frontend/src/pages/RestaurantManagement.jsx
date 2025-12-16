@@ -91,7 +91,8 @@ export default function RestaurantManagement() {
     if (imagePath.startsWith('http')) return imagePath;
 
     const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-    return `http://localhost:3000/${cleanPath}`;
+    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1').replace('/api/v1', '');
+    return `${baseUrl}/${cleanPath}`;
   };
 
   const handleImageChange = (e) => {
@@ -131,10 +132,9 @@ export default function RestaurantManagement() {
         formData.append('image', newItem.image);
       }
 
-
-
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
       const response = await axios.post(
-        `http://localhost:3000/api/v1/restaurants/${restaurant.restaurant_id}/menu`,
+        `${API_URL}/restaurants/${restaurant.restaurant_id}/menu`,
         formData,
         {
           headers: {
