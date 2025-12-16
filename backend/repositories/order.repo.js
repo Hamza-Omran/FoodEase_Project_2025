@@ -4,7 +4,7 @@ class OrderRepository {
     async placeOrder(customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode) {
         // 1. Call stored procedure to place order
         await pool.query(
-            'SELECT * FROM sp_place_order($1::INT, $2::INT, $3::INT, $4::TEXT, $5::payment_status, $6::TEXT)',
+            'SELECT * FROM sp_place_order($1::INT, $2::INT, $3::INT, $4::TEXT, $5::TEXT, $6::TEXT)',
             [customerId, restaurantId, addressId, specialInstructions, paymentMethod, couponCode]
         );
 
