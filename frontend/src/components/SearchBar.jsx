@@ -45,7 +45,7 @@ export default function SearchBar() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           placeholder="Search restaurants or dishes..."
-          className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="flex-1 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white bg-gray-800 placeholder-gray-400"
         />
         <button
           onClick={() => setShowFilters(!showFilters)}
@@ -66,7 +66,7 @@ export default function SearchBar() {
           <select
             value={filters.city}
             onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-            className="border rounded-lg px-4 py-2"
+            className="border border-gray-600 rounded-lg px-4 py-2 text-white bg-gray-800"
           >
             <option value="">All Cities</option>
             {filterOptions.cities.map((city) => (
@@ -77,7 +77,7 @@ export default function SearchBar() {
           <select
             value={filters.cuisine_type}
             onChange={(e) => setFilters({ ...filters, cuisine_type: e.target.value })}
-            className="border rounded-lg px-4 py-2"
+            className="border border-gray-600 rounded-lg px-4 py-2 text-white bg-gray-800"
           >
             <option value="">All Cuisines</option>
             {filterOptions.cuisines.map((cuisine) => (
@@ -88,7 +88,7 @@ export default function SearchBar() {
           <select
             value={filters.min_rating}
             onChange={(e) => setFilters({ ...filters, min_rating: e.target.value })}
-            className="border rounded-lg px-4 py-2"
+            className="border border-gray-600 rounded-lg px-4 py-2 text-white bg-gray-800"
           >
             <option value="">Any Rating</option>
             <option value="4">4+ Stars</option>

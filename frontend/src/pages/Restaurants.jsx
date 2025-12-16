@@ -68,12 +68,12 @@ export default function Restaurants() {
             placeholder="Search restaurants..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-900"
+            className="flex-1 px-4 py-3 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-white bg-gray-800 placeholder-gray-400"
           />
           <select
             value={selectedCuisine}
             onChange={(e) => setSelectedCuisine(e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-900"
+            className="px-4 py-3 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-white bg-gray-800"
           >
             {cuisines.map(cuisine => (
               <option key={cuisine} value={cuisine}>{cuisine}</option>
