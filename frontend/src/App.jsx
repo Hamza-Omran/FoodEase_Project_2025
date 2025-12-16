@@ -32,9 +32,12 @@ import AdminRestaurantsPage from "./pages/AdminRestaurantsPage";
 import AdminDriversPage from "./pages/AdminDriversPage";
 import OrderReviewPage from "./pages/OrderReviewPage";
 
+import ScrollToTop from "./components/common/ScrollToTop";
+
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <CartProvider>
           <OrderProvider>

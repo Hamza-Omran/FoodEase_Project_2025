@@ -14,6 +14,7 @@ import {
   faTruck,
   faClock
 } from '@fortawesome/free-solid-svg-icons';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function DeliveryDashboardNew() {
   const { user, logout } = useAuth();
@@ -77,7 +78,7 @@ export default function DeliveryDashboardNew() {
     }
   };
 
-  if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
@@ -120,8 +121,8 @@ export default function DeliveryDashboardNew() {
             <button
               onClick={() => setActiveTab('available')}
               className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 font-bold text-center text-sm sm:text-base ${activeTab === 'available'
-                  ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50'
-                  : 'text-gray-900 hover:text-gray-900 hover:bg-gray-50'
+                ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50'
+                : 'text-gray-900 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >
               Available Orders ({availableOrders.length})
@@ -129,8 +130,8 @@ export default function DeliveryDashboardNew() {
             <button
               onClick={() => setActiveTab('assigned')}
               className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 font-bold text-center text-sm sm:text-base ${activeTab === 'assigned'
-                  ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50'
-                  : 'text-gray-900 hover:text-gray-900 hover:bg-gray-50'
+                ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50'
+                : 'text-gray-900 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >
               My Deliveries ({myAssignments.length})
@@ -250,9 +251,9 @@ export default function DeliveryDashboardNew() {
                     <div>
                       <h3 className="text-lg sm:text-xl font-bold text-gray-900">Order #{assignment.order_number}</h3>
                       <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs sm:text-sm font-bold ${assignment.delivery_status === 'accepted' ? 'bg-blue-100 text-blue-800' :
-                          assignment.delivery_status === 'picked_up' ? 'bg-purple-100 text-purple-800' :
-                            assignment.delivery_status === 'in_transit' ? 'bg-orange-100 text-orange-800' :
-                              'bg-gray-100 text-gray-800'
+                        assignment.delivery_status === 'picked_up' ? 'bg-purple-100 text-purple-800' :
+                          assignment.delivery_status === 'in_transit' ? 'bg-orange-100 text-orange-800' :
+                            'bg-gray-100 text-gray-800'
                         }`}>
                         {assignment.delivery_status.replace('_', ' ').toUpperCase()}
                       </span>

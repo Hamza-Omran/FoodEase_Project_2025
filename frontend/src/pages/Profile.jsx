@@ -3,6 +3,7 @@ import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 export default function Profile() {
   const { user, login, logout } = useContext(AuthContext);
@@ -75,7 +76,7 @@ export default function Profile() {
     }
   };
 
-  if (loading) return <div className="text-center py-12">Loading...</div>;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="max-w-4xl mx-auto">

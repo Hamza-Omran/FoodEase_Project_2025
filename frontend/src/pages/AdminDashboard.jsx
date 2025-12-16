@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import api from "../services/api";
 import { Link, useNavigate } from "react-router-dom";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 export default function AdminDashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -73,7 +74,7 @@ export default function AdminDashboard() {
   };
 
   if (loading)
-    return <div className="text-center py-12">Loading dashboard...</div>;
+    return <LoadingSpinner />;
 
   if (!restaurant) {
     return (
@@ -162,8 +163,8 @@ export default function AdminDashboard() {
                             {order.status.replace("_", " ").toUpperCase()}
                           </span>
                           {order.status === "delivered" && order.has_review && (
-                            <span className="text-yellow-500" title="Customer left a review">
-                              ⭐
+                            <span className="text-yellow-500 text-xs font-semibold" title="Customer left a review">
+                              REVIEWED
                             </span>
                           )}
                         </div>

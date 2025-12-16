@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function AdminRestaurantsPage() {
     const { user } = useAuth();
@@ -121,7 +122,7 @@ export default function AdminRestaurantsPage() {
         });
     };
 
-    if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+    if (loading) return <LoadingSpinner />;
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
@@ -207,7 +208,7 @@ export default function AdminRestaurantsPage() {
                                                 placeholder="Owner Email"
                                                 value={formData.owner_email}
                                                 onChange={(e) => setFormData({ ...formData, owner_email: e.target.value })}
-                                                className="p-3 border rounded text-white bg-gray-800"
+                                                className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                                 required
                                             />
                                             <input
@@ -215,7 +216,7 @@ export default function AdminRestaurantsPage() {
                                                 placeholder="Owner Password"
                                                 value={formData.owner_password}
                                                 onChange={(e) => setFormData({ ...formData, owner_password: e.target.value })}
-                                                className="p-3 border rounded text-white bg-gray-800"
+                                                className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                                 required
                                             />
                                             <input
@@ -223,7 +224,7 @@ export default function AdminRestaurantsPage() {
                                                 placeholder="Owner Name"
                                                 value={formData.owner_name}
                                                 onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })}
-                                                className="p-3 border rounded text-white bg-gray-800"
+                                                className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                                 required
                                             />
                                             <input
@@ -231,7 +232,7 @@ export default function AdminRestaurantsPage() {
                                                 placeholder="Owner Phone"
                                                 value={formData.owner_phone}
                                                 onChange={(e) => setFormData({ ...formData, owner_phone: e.target.value })}
-                                                className="p-3 border rounded text-white bg-gray-800"
+                                                className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                                 required
                                             />
                                         </div>
@@ -245,7 +246,7 @@ export default function AdminRestaurantsPage() {
                                         placeholder="Restaurant Name"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                     <input
@@ -253,14 +254,14 @@ export default function AdminRestaurantsPage() {
                                         placeholder="Cuisine Type"
                                         value={formData.cuisine_type}
                                         onChange={(e) => setFormData({ ...formData, cuisine_type: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                     />
                                     <input
                                         type="tel"
                                         placeholder="Phone"
                                         value={formData.phone}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                     <input
@@ -268,7 +269,7 @@ export default function AdminRestaurantsPage() {
                                         placeholder="Email"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                     <input
@@ -276,7 +277,7 @@ export default function AdminRestaurantsPage() {
                                         placeholder="Street Address"
                                         value={formData.street_address}
                                         onChange={(e) => setFormData({ ...formData, street_address: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800 col-span-2"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300 col-span-2"
                                         required
                                     />
                                     <input
@@ -284,7 +285,7 @@ export default function AdminRestaurantsPage() {
                                         placeholder="City"
                                         value={formData.city}
                                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                     <input
@@ -292,14 +293,14 @@ export default function AdminRestaurantsPage() {
                                         placeholder="State"
                                         value={formData.state}
                                         onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                     />
                                     <input
                                         type="time"
                                         placeholder="Opening Time"
                                         value={formData.opening_time}
                                         onChange={(e) => setFormData({ ...formData, opening_time: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                     <input
@@ -307,7 +308,7 @@ export default function AdminRestaurantsPage() {
                                         placeholder="Closing Time"
                                         value={formData.closing_time}
                                         onChange={(e) => setFormData({ ...formData, closing_time: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                     <input
@@ -316,7 +317,7 @@ export default function AdminRestaurantsPage() {
                                         placeholder="Delivery Fee (EGP)"
                                         value={formData.delivery_fee}
                                         onChange={(e) => setFormData({ ...formData, delivery_fee: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                     <input
@@ -325,7 +326,7 @@ export default function AdminRestaurantsPage() {
                                         placeholder="Minimum Order (EGP)"
                                         value={formData.minimum_order}
                                         onChange={(e) => setFormData({ ...formData, minimum_order: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                 </div>
@@ -334,7 +335,7 @@ export default function AdminRestaurantsPage() {
                                     placeholder="Description"
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full p-3 border rounded text-white bg-gray-800"
+                                    className="w-full p-3 border rounded text-gray-900 bg-white border-gray-300"
                                     rows="3"
                                 />
 

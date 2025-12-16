@@ -1,0 +1,16 @@
+frontend/src/components/StarRating.jsx:                        ★
+frontend/src/components/StarRating.jsx:                        ★
+frontend/src/components/StarRating.jsx:                        ★
+frontend/src/components/common/Footer.jsx:              <h4 className="font-bold text-gray-900 mb-2">📈 Boost Sales</h4>
+frontend/src/components/common/Footer.jsx:              <h4 className="font-bold text-gray-900 mb-2">📱 Easy Management</h4>
+frontend/src/components/common/Footer.jsx:              <h4 className="font-bold text-gray-900 mb-2">🚀 Fast Delivery</h4>
+frontend/src/components/common/Footer.jsx:              <h4 className="font-bold text-gray-900 mb-2">💰 Transparent Pricing</h4>
+frontend/src/components/common/Footer.jsx:                𝕏
+frontend/src/components/common/Footer.jsx:          © 2025 Foodie. All rights reserved
+frontend/src/pages/OrderDetailsPage.jsx:            ← Back
+frontend/src/pages/OrderDetailsPage.jsx:                    <p className="text-sm text-gray-900">Qty: {item.quantity} × {parseFloat(item.unit_price).toFixed(2)} EGP</p>
+frontend/src/pages/AdminDashboard.jsx:                              ⭐
+frontend/src/pages/OrderTrackingPage.jsx:            ← Back to My Orders
+frontend/src/pages/OrderTrackingPage.jsx:                      {status === 'completed' ? '✓' : idx + 1}
+frontend/src/pages/OrderTrackingPage.jsx:                      Qty: {item.quantity} × {parseFloat(item.unit_price).toFixed(2)} EGP
+frontend/src/pages/OrderReviewPage.jsx:                                ★

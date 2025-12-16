@@ -9,6 +9,7 @@ import {
   faTruck,
   faClock
 } from '@fortawesome/free-solid-svg-icons';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Home() {
   const [featuredRestaurants, setFeaturedRestaurants] = useState([]);
@@ -68,7 +69,7 @@ export default function Home() {
         <h2 className="text-3xl font-bold mb-8 text-gray-900">Featured Restaurants</h2>
 
         {loading ? (
-          <div className="text-center py-8 text-gray-900">Loading...</div>
+          <LoadingSpinner fullScreen={false} />
         ) : featuredRestaurants.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow-md">
             <FontAwesomeIcon icon={faUtensils} className="text-6xl mb-4 text-gray-300" />

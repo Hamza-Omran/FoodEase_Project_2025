@@ -85,19 +85,19 @@ export default function Footer() {
           <h3 className="text-xl font-bold text-gray-900 mb-3">Partnership Benefits</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-bold text-gray-900 mb-2">📈 Boost Sales</h4>
+              <h4 className="font-bold text-gray-900 mb-2">Boost Sales</h4>
               <p className="text-sm">Increase your revenue with our large customer base</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-bold text-gray-900 mb-2">📱 Easy Management</h4>
+              <h4 className="font-bold text-gray-900 mb-2">Easy Management</h4>
               <p className="text-sm">User-friendly dashboard for orders and menu</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-bold text-gray-900 mb-2">🚀 Fast Delivery</h4>
+              <h4 className="font-bold text-gray-900 mb-2">Fast Delivery</h4>
               <p className="text-sm">Reliable delivery network across Egypt</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-bold text-gray-900 mb-2">💰 Transparent Pricing</h4>
+              <h4 className="font-bold text-gray-900 mb-2">Transparent Pricing</h4>
               <p className="text-sm">No hidden fees, clear commission structure</p>
             </div>
           </div>

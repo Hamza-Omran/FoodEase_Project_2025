@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function AdminDriversPage() {
     const { user } = useAuth();
@@ -95,7 +96,7 @@ export default function AdminDriversPage() {
         });
     };
 
-    if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+    if (loading) return <LoadingSpinner />;
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
@@ -183,7 +184,7 @@ export default function AdminDriversPage() {
                                                 placeholder="Full Name"
                                                 value={formData.full_name}
                                                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                                className="p-3 border rounded text-white bg-gray-800"
+                                                className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                                 required
                                             />
                                             <input
@@ -191,7 +192,7 @@ export default function AdminDriversPage() {
                                                 placeholder="Phone"
                                                 value={formData.phone}
                                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                                className="p-3 border rounded text-white bg-gray-800"
+                                                className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                                 required
                                             />
                                             <input
@@ -199,7 +200,7 @@ export default function AdminDriversPage() {
                                                 placeholder="Email"
                                                 value={formData.email}
                                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                className="p-3 border rounded text-white bg-gray-800"
+                                                className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                                 required
                                             />
                                             <input
@@ -207,7 +208,7 @@ export default function AdminDriversPage() {
                                                 placeholder="Password"
                                                 value={formData.password}
                                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                className="p-3 border rounded text-white bg-gray-800"
+                                                className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                                 required
                                             />
                                         </div>
@@ -219,7 +220,7 @@ export default function AdminDriversPage() {
                                     <select
                                         value={formData.vehicle_type}
                                         onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     >
                                         <option value="bike">Bike</option>
@@ -232,7 +233,7 @@ export default function AdminDriversPage() {
                                         placeholder="Vehicle Model"
                                         value={formData.vehicle_model}
                                         onChange={(e) => setFormData({ ...formData, vehicle_model: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                     <input
@@ -240,7 +241,7 @@ export default function AdminDriversPage() {
                                         placeholder="License Plate"
                                         value={formData.license_plate}
                                         onChange={(e) => setFormData({ ...formData, license_plate: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                     <input
@@ -248,7 +249,7 @@ export default function AdminDriversPage() {
                                         placeholder="License Number"
                                         value={formData.license_number}
                                         onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
-                                        className="p-3 border rounded text-white bg-gray-800"
+                                        className="p-3 border rounded text-gray-900 bg-white border-gray-300"
                                         required
                                     />
                                 </div>

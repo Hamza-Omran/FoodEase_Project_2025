@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import { restaurantAPI, menuAPI } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 export default function RestaurantManagement() {
   const { user, logout } = useContext(AuthContext);
@@ -247,7 +248,7 @@ export default function RestaurantManagement() {
     }
   };
 
-  if (loading) return <div className="text-center py-12">Loading...</div>;
+  if (loading) return <LoadingSpinner />;
 
   if (!restaurant) {
     return (
@@ -281,14 +282,14 @@ export default function RestaurantManagement() {
                 placeholder="Category Name"
                 value={newCategory.name}
                 onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-600"
                 required
               />
               <textarea
                 placeholder="Description (optional)"
                 value={newCategory.description}
                 onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
-                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-600"
                 rows="2"
               />
               <button
@@ -374,7 +375,7 @@ export default function RestaurantManagement() {
                 placeholder="Item Name"
                 value={newItem.name}
                 onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-600"
                 required
               />
 
@@ -382,7 +383,7 @@ export default function RestaurantManagement() {
                 placeholder="Description"
                 value={newItem.description}
                 onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-600"
                 rows="3"
               />
 
@@ -392,7 +393,7 @@ export default function RestaurantManagement() {
                 placeholder="Price (EGP)"
                 value={newItem.price}
                 onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-500"
+                className="w-full p-3 border rounded-lg mb-3 text-black placeholder-gray-600"
                 required
               />
 

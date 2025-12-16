@@ -4,6 +4,7 @@ import { deliveryAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBox, faMapMarkerAlt, faHome, faPhone, faSyncAlt, faClock } from '@fortawesome/free-solid-svg-icons';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function AvailableOrdersPage() {
   const { user } = useAuth();
@@ -47,7 +48,7 @@ export default function AvailableOrdersPage() {
     }
   };
 
-  if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8">

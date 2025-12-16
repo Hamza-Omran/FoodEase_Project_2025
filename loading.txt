@@ -1,0 +1,114 @@
+frontend/src/context/CartContext.jsx:  const [loading, setLoading] = useState(false);
+frontend/src/context/CartContext.jsx:      setLoading(true);
+frontend/src/context/CartContext.jsx:      setLoading(false);
+frontend/src/context/AuthContext.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/context/AuthContext.jsx:      setLoading(false);
+frontend/src/context/AuthContext.jsx:      setLoading(false);
+frontend/src/context/AuthContext.jsx:    <AuthContext.Provider value={{ user, token, loading, register, login, logout }}>
+frontend/src/tests/AuthContext.test.jsx:    const { user, loading } = useAuth();
+frontend/src/tests/AuthContext.test.jsx:            <div data-testid="loading">{loading ? 'Loading' : 'Ready'}</div>
+frontend/src/tests/AuthContext.test.jsx:    test('should handle loading state', async () => {
+frontend/src/tests/AuthContext.test.jsx:            expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
+frontend/src/components/common/ProtectedRoute.jsx:  const { user, loading } = useAuth();
+frontend/src/components/common/ProtectedRoute.jsx:  if (loading) {
+frontend/src/components/common/ProtectedRoute.jsx:        <div className="text-xl text-gray-700">Loading...</div>
+frontend/src/components/common/LoadingSpinner.jsx:const LoadingSpinner = ({ fullScreen = true }) => {
+frontend/src/components/common/LoadingSpinner.jsx:                    <p className="text-orange-600 font-medium animate-pulse">Loading...</p>
+frontend/src/components/common/LoadingSpinner.jsx:export default LoadingSpinner;
+frontend/src/pages/AdminDriversPage.jsx:    const [loading, setLoading] = useState(true);
+frontend/src/pages/AdminDriversPage.jsx:            setLoading(false);
+frontend/src/pages/AdminDriversPage.jsx:            setLoading(false);
+frontend/src/pages/AdminDriversPage.jsx:    if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+frontend/src/pages/Profile.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/Profile.jsx:      setLoading(false);
+frontend/src/pages/Profile.jsx:      setLoading(false);
+frontend/src/pages/Profile.jsx:  if (loading) return <div className="text-center py-12">Loading...</div>;
+frontend/src/pages/AdminSystemDashboard.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/AdminSystemDashboard.jsx:      setLoading(false);
+frontend/src/pages/AdminSystemDashboard.jsx:      setLoading(false);
+frontend/src/pages/AdminSystemDashboard.jsx:  if (loading) return <div className="text-center py-12">Loading dashboard...</div>;
+frontend/src/pages/Login.jsx:  const [loading, setLoading] = useState(false);
+frontend/src/pages/Login.jsx:    setLoading(true);
+frontend/src/pages/Login.jsx:      setLoading(false);
+frontend/src/pages/Login.jsx:              {loading ? "Signing in..." : "Sign in"}
+frontend/src/pages/MyOrders.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/MyOrders.jsx:      setLoading(false);
+frontend/src/pages/MyOrders.jsx:      setLoading(false);
+frontend/src/pages/MyOrders.jsx:    return <div className="text-center py-12">Loading orders...</div>;
+frontend/src/pages/AdminRestaurantsPage.jsx:    const [loading, setLoading] = useState(true);
+frontend/src/pages/AdminRestaurantsPage.jsx:            setLoading(false);
+frontend/src/pages/AdminRestaurantsPage.jsx:            setLoading(false);
+frontend/src/pages/AdminRestaurantsPage.jsx:    if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+frontend/src/pages/CheckoutPage.jsx:  const [loading, setLoading] = useState(false);
+frontend/src/pages/CheckoutPage.jsx:        disabled={loading || !selectedAddress || addresses.length === 0}
+frontend/src/pages/OrderDetailsPage.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/OrderDetailsPage.jsx:      setLoading(false);
+frontend/src/pages/OrderDetailsPage.jsx:      setLoading(false);
+frontend/src/pages/OrderDetailsPage.jsx:  if (loading) {
+frontend/src/pages/OrderDetailsPage.jsx:        <div className="text-xl text-gray-900">Loading order details...</div>
+frontend/src/pages/AvailableOrdersPage.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/AvailableOrdersPage.jsx:      setLoading(false);
+frontend/src/pages/AvailableOrdersPage.jsx:      setLoading(false);
+frontend/src/pages/AvailableOrdersPage.jsx:  if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+frontend/src/pages/Home.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/Home.jsx:      setLoading(false);
+frontend/src/pages/Home.jsx:      setLoading(false);
+frontend/src/pages/Home.jsx:        {loading ? (
+frontend/src/pages/Home.jsx:          <div className="text-center py-8 text-gray-900">Loading...</div>
+frontend/src/pages/AdminDashboard.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/AdminDashboard.jsx:        setLoading(false);
+frontend/src/pages/AdminDashboard.jsx:      setLoading(false);
+frontend/src/pages/AdminDashboard.jsx:      setLoading(false);
+frontend/src/pages/AdminDashboard.jsx:    return <div className="text-center py-12">Loading dashboard...</div>;
+frontend/src/pages/MyDeliveriesPage.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/MyDeliveriesPage.jsx:      setLoading(false);
+frontend/src/pages/MyDeliveriesPage.jsx:      setLoading(false);
+frontend/src/pages/MyDeliveriesPage.jsx:  if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+frontend/src/pages/Restaurants.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/Restaurants.jsx:      setLoading(false);
+frontend/src/pages/Restaurants.jsx:      setLoading(false);
+frontend/src/pages/Restaurants.jsx:  if (loading) {
+frontend/src/pages/Restaurants.jsx:        <div className="text-2xl text-gray-900">Loading restaurants...</div>
+frontend/src/pages/AdminReportsPage.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/AdminReportsPage.jsx:      setLoading(false);
+frontend/src/pages/AdminReportsPage.jsx:      setLoading(false);
+frontend/src/pages/AdminReportsPage.jsx:  if (loading) return <div className="text-center py-12 text-gray-900">Loading reports...</div>;
+frontend/src/pages/Register.jsx:  const [loading, setLoading] = useState(false);
+frontend/src/pages/Register.jsx:    setLoading(true);
+frontend/src/pages/Register.jsx:      setLoading(false);
+frontend/src/pages/Register.jsx:              {loading ? "Creating account..." : "Sign up"}
+frontend/src/pages/OrderTrackingPage.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/OrderTrackingPage.jsx:          setLoading(false);
+frontend/src/pages/OrderTrackingPage.jsx:        if (mounted) setLoading(false);
+frontend/src/pages/OrderTrackingPage.jsx:  if (loading) {
+frontend/src/pages/OrderTrackingPage.jsx:        <div className="text-xl text-gray-900">Loading order details...</div>
+frontend/src/pages/RestaurantMenu.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/RestaurantMenu.jsx:      setLoading(true);
+frontend/src/pages/RestaurantMenu.jsx:      setLoading(false);
+frontend/src/pages/RestaurantMenu.jsx:  if (loading) {
+frontend/src/pages/RestaurantMenu.jsx:        <div className="text-xl text-gray-900">Loading restaurant...</div>
+frontend/src/pages/DeliveryDashboard.jsx:    const [loading, setLoading] = useState(true);
+frontend/src/pages/DeliveryDashboard.jsx:            setLoading(false);
+frontend/src/pages/DeliveryDashboard.jsx:            setLoading(false);
+frontend/src/pages/DeliveryDashboard.jsx:    if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+frontend/src/pages/OrderReviewPage.jsx:    const [loading, setLoading] = useState(true);
+frontend/src/pages/OrderReviewPage.jsx:            setLoading(false);
+frontend/src/pages/OrderReviewPage.jsx:            setLoading(false);
+frontend/src/pages/OrderReviewPage.jsx:    if (loading) {
+frontend/src/pages/OrderReviewPage.jsx:        return <div className="text-center py-12">Loading order details...</div>;
+frontend/src/pages/SearchResults.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/SearchResults.jsx:      setLoading(false);
+frontend/src/pages/SearchResults.jsx:      setLoading(false);
+frontend/src/pages/SearchResults.jsx:  if (loading) return <div className="text-center py-12">Searching...</div>;
+frontend/src/pages/CartPage.jsx:  const { cart, loading, updateCartItem, removeFromCart, getCartTotal } = useCart();
+frontend/src/pages/CartPage.jsx:  if (loading) {
+frontend/src/pages/CartPage.jsx:        <div className="text-xl">Loading cart...</div>
+frontend/src/pages/RestaurantManagement.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/RestaurantManagement.jsx:        setLoading(false);
+frontend/src/pages/RestaurantManagement.jsx:      setLoading(false);
+frontend/src/pages/RestaurantManagement.jsx:      setLoading(false);
+frontend/src/pages/RestaurantManagement.jsx:  if (loading) return <div className="text-center py-12">Loading...</div>;
+frontend/src/pages/DeliveryDashboardNew.jsx:  const [loading, setLoading] = useState(true);
+frontend/src/pages/DeliveryDashboardNew.jsx:      setLoading(false);
+frontend/src/pages/DeliveryDashboardNew.jsx:      setLoading(false);
+frontend/src/pages/DeliveryDashboardNew.jsx:  if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;

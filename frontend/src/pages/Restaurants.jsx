@@ -8,6 +8,7 @@ import {
   faMapMarkerAlt
 } from '@fortawesome/free-solid-svg-icons';
 import StarRating from '../components/StarRating';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Restaurants() {
   const [restaurants, setRestaurants] = useState([]);
@@ -52,11 +53,7 @@ export default function Restaurants() {
   });
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-2xl text-gray-900">Loading restaurants...</div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (

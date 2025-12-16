@@ -13,6 +13,7 @@ import {
   faStar,
   faExclamationCircle
 } from '@fortawesome/free-solid-svg-icons';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function MyDeliveriesPage() {
   const { user } = useAuth();
@@ -85,7 +86,7 @@ export default function MyDeliveriesPage() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  if (loading) return <div className="text-center py-12 text-gray-900">Loading...</div>;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
