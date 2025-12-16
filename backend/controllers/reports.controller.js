@@ -1,20 +1,28 @@
 const pool = require('../config/db');
 
 // Daily sales report
+// Daily sales report (Aggregated by Restaurant for the period)
 exports.getDailySales = async (req, res, next) => {
   try {
-    const { restaurant_id, days = 30 } = req.query;
+    const { restaurant_id, days = 7 } = req.query;
 
-    let query = 'SELECT * FROM vw_daily_sales WHERE order_date >= CURRENT_DATE - ($1 * INTERVAL \'1 day\')';
+    const query = `
+      SELECT 
+        r.restaurant_id,
+        r.name as restaurant_name,
+        COUNT(o.order_id) as total_orders,
+        SUM(o.total_amount) as total_revenue,
+        AVG(o.total_amount) as avg_order_value
+      FROM Restaurants r
+      JOIN Orders o ON r.restaurant_id = o.restaurant_id
+      WHERE o.order_date >= CURRENT_DATE - ($1 * INTERVAL '1 day')
+      ${restaurant_id ? 'AND r.restaurant_id = $2' : ''}
+      GROUP BY r.restaurant_id, r.name
+      ORDER BY total_revenue DESC
+    `;
+
     const params = [parseInt(days)];
-    let paramIndex = 2;
-
-    if (restaurant_id) {
-      query += ` AND restaurant_id = $${paramIndex++}`;
-      params.push(restaurant_id);
-    }
-
-    query += ' ORDER BY order_date DESC';
+    if (restaurant_id) params.push(restaurant_id);
 
     const { rows: sales } = await pool.query(query, params);
     res.json(sales);

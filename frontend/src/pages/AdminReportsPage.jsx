@@ -82,12 +82,11 @@ export default function AdminReportsPage() {
             {/* Daily Sales Tab */}
             {activeTab === 'sales' && (
               <div>
-                <h2 className="text-2xl font-bold mb-4 text-gray-900">Daily Sales (Last 7 Days)</h2>
+                <h2 className="text-2xl font-bold mb-4 text-gray-900">Sales Summary (Last 7 Days)</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="px-4 py-3 text-left text-gray-900">Date</th>
                         <th className="px-4 py-3 text-left text-gray-900">Restaurant</th>
                         <th className="px-4 py-3 text-left text-gray-900">Orders</th>
                         <th className="px-4 py-3 text-left text-gray-900">Revenue</th>
@@ -97,7 +96,6 @@ export default function AdminReportsPage() {
                     <tbody>
                       {dailySales.map((sale, idx) => (
                         <tr key={idx} className="border-b hover:bg-gray-50">
-                          <td className="px-4 py-3 text-gray-900">{new Date(sale.order_date).toLocaleDateString()}</td>
                           <td className="px-4 py-3 text-gray-900">{sale.restaurant_name}</td>
                           <td className="px-4 py-3 text-gray-900">{sale.total_orders}</td>
                           <td className="px-4 py-3 text-orange-600 font-bold">{parseFloat(sale.total_revenue).toFixed(2)} EGP</td>
