@@ -42,10 +42,10 @@ exports.register = async (req, res, next) => {
 
     // Create user
     const { rows: result } = await pool.query(`INSERT INTO Users (email, password_hash, full_name, phone, role, is_active) 
-       VALUES ($1, $2, $3, $4, $5, TRUE)`, [email, passwordHash, name, phone || null, userRole]
+       VALUES ($1, $2, $3, $4, $5, TRUE) RETURNING user_id`, [email, passwordHash, name, phone || null, userRole]
     );
 
-    const userId = result.rows[0].id;
+    const userId = result[0].user_id;
 
     // Generate token
     const token = generateToken(userId);
