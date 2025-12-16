@@ -22,9 +22,8 @@ Users Credentials:
 
 ---
 - # Live Demo: https://event-x-studio-alpha.vercel.app
-<div style="text-align: center;">
-<img width="737" height="684" alt="image" src="https://github.com/user-attachments/assets/174e1358-b92a-4f48-a0d4-9d52cfdf54df" />
-</div>
+<img width="1120" height="683" alt="image" src="https://github.com/user-attachments/assets/769d2883-1c69-41ea-bdee-78ac1f2c18b0" />
+
 
 ---
 
