@@ -155,8 +155,8 @@ export default function CheckoutPage() {
               key={addr.address_id}
               onClick={() => setSelectedAddress(addr.address_id)}
               className={`p-4 border rounded-lg mb-2 cursor-pointer transition-colors ${selectedAddress === addr.address_id
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-gray-300 hover:border-orange-300"
+                ? "border-orange-500 bg-orange-50"
+                : "border-gray-300 hover:border-orange-300"
                 }`}
             >
               <p className="font-medium text-gray-800">{addr.address_label}</p>
@@ -221,7 +221,7 @@ export default function CheckoutPage() {
           value={specialInstructions}
           onChange={(e) => setSpecialInstructions(e.target.value)}
           placeholder="Any special requests? (optional)"
-          className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-800"
+          className="w-full border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white bg-gray-800 placeholder-gray-400"
           rows="3"
         />
       </div>
