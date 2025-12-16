@@ -30,6 +30,15 @@ export default function CartPage() {
     }
   };
 
+  // Helper function to construct proper image URLs
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200';
+    if (imagePath.startsWith('http')) return imagePath;
+    const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1').replace('/api/v1', '');
+    return `${baseUrl}/${cleanPath}`;
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -66,7 +75,7 @@ export default function CartPage() {
           {cart.map((item) => (
             <div key={item.cart_item_id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border-b last:border-0">
               <img
-                src={item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'}
+                src={getImageUrl(item.image_url)}
                 alt={item.name}
                 className="w-20 h-20 object-cover rounded"
                 onError={(e) => {
