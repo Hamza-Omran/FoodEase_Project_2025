@@ -13,8 +13,8 @@ logs/
 npm-debug.log*
 
 # Uploads (don't commit uploaded files in production)
-uploads/*
-!uploads/.gitkeep
+# uploads/*
+# !uploads/.gitkeep
 
 # IDE
 .vscode/
