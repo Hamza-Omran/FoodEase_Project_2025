@@ -2,7 +2,27 @@
 
 A complete full-stack web application for food ordering and delivery management system with multi-role support, real-time tracking, and comprehensive analytics.
 
-**Version:** 2.0 | **Status:** Production Ready ✅ | **Updated:** December 2024
+**Version:** 2.0 | **Status:** Production Ready ✅ | **Updated:** December 2025
+
+Users Credentials:
+- Admin credentials: email: admin@foodease.local password: Hamza1234 role: admin
+
+- Restaurant Owner credentials (Pizza Palace): email: owner@foodease.local password: Hamza1234 role: restaurant_owner
+
+- Restaurant Owner credentials (Sushi House): email: owner2@foodease.local password: Hamza1234 role: restaurant_owner
+
+- Restaurant Owner credentials (Burger Hub): email: owner3@foodease.local password: Hamza1234 role: restaurant_owner
+
+- Restaurant Owner credentials (Healthy Bites): email: owner4@foodease.local password: Hamza1234 role: restaurant_owner
+
+- Customer credentials: email: customer@foodease.local password: Hamza1234 role: customer
+
+- Driver credentials: email: driver@foodease.local password: Hamza1234 role: driver
+
+
+---
+- Live Demo: https://event-x-studio-alpha.vercel.app
+ <img width="996" height="916" alt="image" src="https://github.com/user-attachments/assets/63f41833-c7b1-4e4b-b620-40b1a2040f18" />
 
 ---
 
