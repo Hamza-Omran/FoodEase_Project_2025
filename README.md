@@ -21,7 +21,7 @@ Users Credentials:
 
 
 ---
-- # Live Demo: https://event-x-studio-alpha.vercel.app
+- # Live Demo: https://food-ease-project-2025-tbqm.vercel.app/
 <img width="1120" height="683" alt="image" src="https://github.com/user-attachments/assets/769d2883-1c69-41ea-bdee-78ac1f2c18b0" />
 
 
