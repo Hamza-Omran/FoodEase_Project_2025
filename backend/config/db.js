@@ -4,8 +4,6 @@ const env = require('./env'); // Ensure env vars are loaded
 // Prefer DATABASE_URL for connection string (works best with Vercel/Supabase pooler)
 const connectionString = process.env.DATABASE_URL || `postgresql://${env.DB_USER}:${env.DB_PASSWORD}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
 
-console.log(`DB Config: Using Connection String: ${connectionString.replace(/:[^:@]*@/, ':****@')}`); // Log masked string
-
 const pool = new Pool({
     connectionString,
     max: 10,
