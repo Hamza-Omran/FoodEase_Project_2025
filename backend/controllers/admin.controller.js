@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 const AppError = require('../utils/AppError');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // ============================================
 // SYSTEM OVERVIEW
