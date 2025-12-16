@@ -54,8 +54,9 @@ export default function OrderDetailsPage() {
   const fetchOrderReviews = async (restaurantId) => {
     try {
       const token = localStorage.getItem('token');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
       const response = await axios.get(
-        `http://localhost:3000/api/v1/reviews/restaurant/${restaurantId}`,
+        `${API_URL}/reviews/restaurant/${restaurantId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

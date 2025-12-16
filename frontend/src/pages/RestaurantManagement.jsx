@@ -193,8 +193,9 @@ export default function RestaurantManagement() {
         formData.append('image', newItem.image);
       }
 
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
       const response = await axios.put(
-        `http://localhost:3000/api/v1/restaurants/${restaurant.restaurant_id}/menu/${editingItem.menu_item_id}`,
+        `${API_URL}/restaurants/${restaurant.restaurant_id}/menu/${editingItem.menu_item_id}`,
         formData,
         {
           headers: {
