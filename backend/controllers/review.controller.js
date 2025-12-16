@@ -12,8 +12,7 @@ exports.createRestaurantReview = async (req, res, next) => {
 
         // Get the customer ID from the authenticated user
         // This ensures only logged-in customers can leave reviews
-        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]
-        );
+        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]);
 
         if (!customers[0]) {
             return next(new AppError('Customer profile not found', 404));
@@ -30,7 +29,9 @@ exports.createRestaurantReview = async (req, res, next) => {
         // If order_id is provided, verify the customer actually ordered from this restaurant
         // This prevents fake reviews from people who haven't been customers
         if (order_id) {
-            const { rows: orders } = await pool.query('SELECT order_id FROM Orders WHERE order_id = $1 AND customer_id = $2 AND restaurant_id = $3', [order_id, customer_id, restaurant_id]
+            const { rows: orders } = await pool.query(
+                'SELECT order_id FROM Orders WHERE order_id = $1 AND customer_id = $2 AND restaurant_id = $3',
+                [order_id, customer_id, restaurant_id]
             );
 
             if (!orders[0]) {
@@ -40,19 +41,22 @@ exports.createRestaurantReview = async (req, res, next) => {
 
         // Insert the review into the database
         // The trigger will automatically update the restaurant's average rating
-        const { rows: result } = await pool.query(`INSERT INTO Restaurant_Reviews (customer_id, restaurant_id, order_id, rating, review_text)
-       VALUES ($1, $2, $3, $4, $5)`, [customer_id, restaurant_id, order_id || null, rating, review_text || null]
+        const { rows: result } = await pool.query(
+            `INSERT INTO Restaurant_Reviews (customer_id, restaurant_id, order_id, rating, review_text)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING review_id`,
+            [customer_id, restaurant_id, order_id || null, rating, review_text || null]
         );
 
         // Return the newly created review
         res.status(201).json({
             success: true,
-            review_id: result.rows[0].id,
+            review_id: result[0].review_id,
             message: 'Review submitted successfully'
         });
     } catch (err) {
         // Handle duplicate review attempts
-        if (err.code === 'ER_DUP_ENTRY') {
+        if (err.code === '23505') { // Postgres Unique Violation
             return next(new AppError('You have already reviewed this order', 400));
         }
         next(err);
@@ -82,8 +86,7 @@ exports.getRestaurantReviews = async (req, res, next) => {
         );
 
         // Also get the restaurant's overall rating statistics
-        const { rows: stats } = await pool.query('SELECT rating, review_count FROM Restaurants WHERE restaurant_id = $1', [restaurantId]
-        );
+        const { rows: stats } = await pool.query('SELECT rating, review_count FROM Restaurants WHERE restaurant_id = $1', [restaurantId]);
 
         res.json({
             reviews,
@@ -101,8 +104,7 @@ exports.createMenuItemReview = async (req, res, next) => {
         const { menu_item_id, order_id, rating, review_text } = req.body;
 
         // Get customer ID from authenticated user
-        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]
-        );
+        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]);
 
         if (!customers[0]) {
             return next(new AppError('Customer profile not found', 404));
@@ -130,17 +132,20 @@ exports.createMenuItemReview = async (req, res, next) => {
         }
 
         // Insert the menu item review
-        const { rows: result } = await pool.query(`INSERT INTO Menu_Item_Reviews (customer_id, menu_item_id, order_id, rating, review_text)
-       VALUES ($1, $2, $3, $4, $5)`, [customer_id, menu_item_id, order_id || null, rating, review_text || null]
+        const { rows: result } = await pool.query(
+            `INSERT INTO Menu_Item_Reviews (customer_id, menu_item_id, order_id, rating, review_text)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING review_id`,
+            [customer_id, menu_item_id, order_id || null, rating, review_text || null]
         );
 
         res.status(201).json({
             success: true,
-            review_id: result.rows[0].id,
+            review_id: result[0].review_id,
             message: 'Review submitted successfully'
         });
     } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
+        if (err.code === '23505') { // Postgres Unique Violation
             return next(new AppError('You have already reviewed this item', 400));
         }
         next(err);
@@ -168,8 +173,7 @@ exports.getMenuItemReviews = async (req, res, next) => {
         );
 
         // Get overall rating statistics for the item
-        const { rows: stats } = await pool.query('SELECT rating, review_count FROM Menu_Items WHERE menu_item_id = $1', [menuItemId]
-        );
+        const { rows: stats } = await pool.query('SELECT rating, review_count FROM Menu_Items WHERE menu_item_id = $1', [menuItemId]);
 
         res.json({
             reviews,
@@ -185,8 +189,7 @@ exports.getMenuItemReviews = async (req, res, next) => {
 exports.getMyReviews = async (req, res, next) => {
     try {
         // Get customer ID
-        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]
-        );
+        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]);
 
         if (!customers[0]) {
             return next(new AppError('Customer profile not found', 404));
@@ -206,7 +209,7 @@ exports.getMyReviews = async (req, res, next) => {
         'restaurant' as review_type
       FROM Restaurant_Reviews rr
       JOIN Restaurants r ON rr.restaurant_id = r.restaurant_id
-      WHERE rr.customer_id = ?
+      WHERE rr.customer_id = $1
       ORDER BY rr.review_date DESC`,
             [customer_id]
         );
@@ -225,7 +228,7 @@ exports.getMyReviews = async (req, res, next) => {
       FROM Menu_Item_Reviews mir
       JOIN Menu_Items mi ON mir.menu_item_id = mi.menu_item_id
       JOIN Restaurants r ON mi.restaurant_id = r.restaurant_id
-      WHERE mir.customer_id = ?
+      WHERE mir.customer_id = $1
       ORDER BY mir.review_date DESC`,
             [customer_id]
         );
@@ -248,8 +251,7 @@ exports.updateReview = async (req, res, next) => {
         const { rating, review_text, review_type } = req.body;
 
         // Get customer ID to verify ownership
-        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]
-        );
+        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]);
 
         if (!customers[0]) {
             return next(new AppError('Customer profile not found', 404));
@@ -267,7 +269,7 @@ exports.updateReview = async (req, res, next) => {
 
         // Update the review but only if it belongs to this customer
         // This prevents users from editing other people's reviews
-        const { rows: result } = await pool.query(`UPDATE ${table} 
+        const result = await pool.query(`UPDATE ${table} 
        SET rating = COALESCE($1, rating), 
            review_text = COALESCE($2, review_text)
        WHERE review_id = $3 AND customer_id = $4`, [rating, review_text, reviewId, customer_id]
@@ -294,8 +296,7 @@ exports.deleteReview = async (req, res, next) => {
         const { review_type } = req.query;
 
         // Get customer ID
-        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]
-        );
+        const { rows: customers } = await pool.query('SELECT customer_id FROM Customers WHERE user_id = $1', [req.user.id]);
 
         if (!customers[0]) {
             return next(new AppError('Customer profile not found', 404));
@@ -307,8 +308,7 @@ exports.deleteReview = async (req, res, next) => {
         const table = review_type === 'menu_item' ? 'Menu_Item_Reviews' : 'Restaurant_Reviews';
 
         // Delete only if the review belongs to this customer
-        const { rows: result } = await pool.query(`DELETE FROM ${table} WHERE review_id = $1 AND customer_id = $2`, [reviewId, customer_id]
-        );
+        const result = await pool.query(`DELETE FROM ${table} WHERE review_id = $1 AND customer_id = $2`, [reviewId, customer_id]);
 
         if (result.rowCount === 0) {
             return next(new AppError('Review not found or you do not have permission to delete it', 404));
